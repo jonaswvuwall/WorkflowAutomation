@@ -51,7 +51,7 @@ public class WorkflowsController(JsonDataService data) : ControllerBase
             WorkflowId = id,
             TriggeredAt = DateTime.UtcNow,
             ConditionsMet = true,
-            ActionsExecuted = workflow.Actions.Select(a => new ActionResult
+            ActionsExecuted = workflow.Actions.Select(a => new WorkflowEngine.Models.ActionResult
             {
                 Type = a.Type,
                 Status = "success",

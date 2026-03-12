@@ -1,0 +1,7 @@
+C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\WorkflowEngine.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\WorkflowEngine.AssemblyInfoInputs.cache
+C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\WorkflowEngine.AssemblyInfo.cs
+C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\WorkflowEngine.csproj.CoreCompileInputs.cache
+C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\WorkflowEngine.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\WorkflowEngine.sourcelink.json
