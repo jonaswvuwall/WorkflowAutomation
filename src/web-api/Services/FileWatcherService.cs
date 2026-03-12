@@ -85,8 +85,7 @@ public sealed class FileWatcherService(
         {
             try
             {
-                var context = TriggerContext.FromFile(workflow.When.Type, fullPath);
-                var result = await actionExecutor.ExecuteAsync(workflow.Then, context);
+                var result = await actionExecutor.ExecuteAsync(workflow.Then);
 
                 var run = new Run
                 {

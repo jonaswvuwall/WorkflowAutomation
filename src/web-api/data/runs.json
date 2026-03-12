@@ -70,5 +70,65 @@
       "message": "Created C:\\Users\\JonasWintrich\\develop\\workflow\\DIESE_DATEI_WURDE_ERSTELLT.txt"
     },
     "error": null
+  },
+  {
+    "id": "8169ca9d-3ba3-4453-a6dd-6a15d6522c77",
+    "workflowId": "ef5c9ee2-bd15-4080-9b81-c1e476c2803a",
+    "triggeredAt": "2026-03-12T09:36:50.401783Z",
+    "status": "success",
+    "actionExecuted": {
+      "type": "create_file",
+      "status": "success",
+      "message": "Created C:\\Users\\JonasWintrich\\develop\\workflow\\DIESE_DATEI_WURDE_ERSTELLT.txt"
+    },
+    "error": null
+  },
+  {
+    "id": "496e1182-33ed-449d-a045-6daa5b50583f",
+    "workflowId": "ef5c9ee2-bd15-4080-9b81-c1e476c2803a",
+    "triggeredAt": "2026-03-12T09:41:22.0321187Z",
+    "status": "success",
+    "actionExecuted": {
+      "type": "create_file",
+      "status": "success",
+      "message": "Created C:\\Users\\JonasWintrich\\develop\\workflow\\DIESE_DATEI_WURDE_ERSTELLT.txt"
+    },
+    "error": null
+  },
+  {
+    "id": "e79c430d-62bd-4228-9a4a-0d0badd7e3eb",
+    "workflowId": "ef5c9ee2-bd15-4080-9b81-c1e476c2803a",
+    "triggeredAt": "2026-03-12T09:41:22.1813587Z",
+    "status": "success",
+    "actionExecuted": {
+      "type": "create_file",
+      "status": "success",
+      "message": "Created C:\\Users\\JonasWintrich\\develop\\workflow\\DIESE_DATEI_WURDE_ERSTELLT.txt"
+    },
+    "error": null
+  },
+  {
+    "id": "6eba02fa-e0f3-473f-a329-178b2a34f22b",
+    "workflowId": "ef5c9ee2-bd15-4080-9b81-c1e476c2803a",
+    "triggeredAt": "2026-03-12T09:41:22.3199977Z",
+    "status": "success",
+    "actionExecuted": {
+      "type": "create_file",
+      "status": "success",
+      "message": "Created C:\\Users\\JonasWintrich\\develop\\workflow\\DIESE_DATEI_WURDE_ERSTELLT.txt"
+    },
+    "error": null
+  },
+  {
+    "id": "07ab121c-6045-4a9f-8a54-8a3691b3cbb2",
+    "workflowId": "ef5c9ee2-bd15-4080-9b81-c1e476c2803a",
+    "triggeredAt": "2026-03-12T09:41:22.4409918Z",
+    "status": "success",
+    "actionExecuted": {
+      "type": "create_file",
+      "status": "success",
+      "message": "Created C:\\Users\\JonasWintrich\\develop\\workflow\\DIESE_DATEI_WURDE_ERSTELLT.txt"
+    },
+    "error": null
   }
 ]

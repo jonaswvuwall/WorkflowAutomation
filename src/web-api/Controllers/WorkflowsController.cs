@@ -50,8 +50,7 @@ public class WorkflowsController(JsonDataService data, ActionExecutor actionExec
         var workflow = data.GetWorkflow(id);
         if (workflow is null) return NotFound();
 
-        var context = TriggerContext.Manual();
-        var result = await actionExecutor.ExecuteAsync(workflow.Then, context);
+        var result = await actionExecutor.ExecuteAsync(workflow.Then);
 
         var run = new Run
         {

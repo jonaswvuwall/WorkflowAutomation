@@ -1,6 +1,6 @@
 import type { Workflow } from '../types';
 import { createWorkflow, updateWorkflow } from '../api';
-import { renderActionRow, getActions, clearActions } from './ActionsEditor';
+import { renderActionRow, getAction } from './ActionsEditor';
 
 type OnSaved = () => void;
 
@@ -35,7 +35,6 @@ export function openCreateModal(): void {
   (document.getElementById('wf-enabled') as HTMLSelectElement).value = 'true';
   triggerTypeEl().value = 'manual';
   triggerPathEl().value = '';
-  clearActions(actionsContainer());
   renderActionRow(actionsContainer());
   updatePathVisibility();
   document.getElementById('modal')!.classList.add('open');
@@ -59,7 +58,6 @@ export function closeModal(): void {
 }
 
 export async function saveWorkflow(): Promise<void> {
-  const actions = getActions(actionsContainer());
   const payload = {
     name: (document.getElementById('wf-name') as HTMLInputElement).value,
     enabled: (document.getElementById('wf-enabled') as HTMLSelectElement).value === 'true',
@@ -67,7 +65,7 @@ export async function saveWorkflow(): Promise<void> {
       type: currentTriggerType(),
       path: triggerPathEl().value || null,
     },
-    then: actions[0] ?? { type: '', parameters: {} },
+    then: getAction(actionsContainer()),
   };
 
   const ok = editingId

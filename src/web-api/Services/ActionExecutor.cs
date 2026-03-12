@@ -6,7 +6,7 @@ namespace WorkflowEngine.Services;
 
 public sealed class ActionExecutor(IHttpClientFactory httpClientFactory, ILogger<ActionExecutor> logger)
 {
-    public async Task<ActionResult> ExecuteAsync(WorkflowAction action, TriggerContext context)
+    public async Task<ActionResult> ExecuteAsync(WorkflowAction action)
     {
         var p = new Parameters(action.Parameters);
         try
