@@ -47,7 +47,6 @@ export function openEditModal(w: Workflow): void {
   (document.getElementById('wf-enabled') as HTMLSelectElement).value = String(w.enabled);
   triggerTypeEl().value = w.when.type ?? 'manual';
   triggerPathEl().value = w.when.path ?? '';
-  clearActions(actionsContainer());
   renderActionRow(actionsContainer(), w.then);
   updatePathVisibility();
   document.getElementById('modal')!.classList.add('open');
