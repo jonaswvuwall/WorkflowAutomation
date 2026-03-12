@@ -1,6 +1,5 @@
 import type { Workflow } from '../types';
 import { createWorkflow, updateWorkflow } from '../api';
-import { renderConditionRow, getConditions, clearConditions } from './ConditionsEditor';
 import { renderActionRow, getActions, clearActions } from './ActionsEditor';
 
 type OnSaved = () => void;
@@ -8,11 +7,10 @@ type OnSaved = () => void;
 let editingId: string | null = null;
 let onSavedCallback: OnSaved = () => {};
 
-const conditionsContainer = () => document.getElementById('wf-conditions-container') as HTMLElement;
-const actionsContainer    = () => document.getElementById('wf-actions-container') as HTMLElement;
-const triggerTypeEl       = () => document.getElementById('wf-trigger-type') as HTMLSelectElement;
-const triggerPathEl       = () => document.getElementById('wf-trigger-path') as HTMLInputElement;
-const triggerPathLabel    = () => document.getElementById('label-trigger-path') as HTMLElement;
+const actionsContainer = () => document.getElementById('wf-actions-container') as HTMLElement;
+const triggerTypeEl    = () => document.getElementById('wf-trigger-type') as HTMLSelectElement;
+const triggerPathEl    = () => document.getElementById('wf-trigger-path') as HTMLInputElement;
+const triggerPathLabel = () => document.getElementById('label-trigger-path') as HTMLElement;
 
 function currentTriggerType(): string {
   return triggerTypeEl().value;
@@ -27,22 +25,7 @@ function updatePathVisibility(): void {
 
 export function initModal(onSaved: OnSaved): void {
   onSavedCallback = onSaved;
-
-  triggerTypeEl().addEventListener('change', () => {
-    updatePathVisibility();
-    // Re-render existing conditions with updated field options
-    const existing = getConditions(conditionsContainer());
-    clearConditions(conditionsContainer());
-    existing.forEach(c => renderConditionRow(conditionsContainer(), currentTriggerType(), c));
-  });
-
-  document.getElementById('btn-add-condition')!.addEventListener('click', () => {
-    renderConditionRow(conditionsContainer(), currentTriggerType());
-  });
-
-  document.getElementById('btn-add-action')!.addEventListener('click', () => {
-    renderActionRow(actionsContainer());
-  });
+  triggerTypeEl().addEventListener('change', updatePathVisibility);
 }
 
 export function openCreateModal(): void {
@@ -52,9 +35,8 @@ export function openCreateModal(): void {
   (document.getElementById('wf-enabled') as HTMLSelectElement).value = 'true';
   triggerTypeEl().value = 'manual';
   triggerPathEl().value = '';
-  (document.getElementById('wf-continue') as HTMLSelectElement).value = 'false';
-  clearConditions(conditionsContainer());
   clearActions(actionsContainer());
+  renderActionRow(actionsContainer());
   updatePathVisibility();
   document.getElementById('modal')!.classList.add('open');
 }
@@ -64,16 +46,10 @@ export function openEditModal(w: Workflow): void {
   document.getElementById('modal-title')!.textContent = 'Workflow bearbeiten';
   (document.getElementById('wf-name') as HTMLInputElement).value = w.name;
   (document.getElementById('wf-enabled') as HTMLSelectElement).value = String(w.enabled);
-  triggerTypeEl().value = w.trigger?.type ?? 'manual';
-  triggerPathEl().value = w.trigger?.path ?? '';
-  (document.getElementById('wf-continue') as HTMLSelectElement).value = String(w.continueOnError);
-
-  clearConditions(conditionsContainer());
-  w.conditions.forEach(c => renderConditionRow(conditionsContainer(), currentTriggerType(), c));
-
+  triggerTypeEl().value = w.when.type ?? 'manual';
+  triggerPathEl().value = w.when.path ?? '';
   clearActions(actionsContainer());
-  w.actions.forEach(a => renderActionRow(actionsContainer(), a));
-
+  renderActionRow(actionsContainer(), w.then);
   updatePathVisibility();
   document.getElementById('modal')!.classList.add('open');
 }
@@ -83,16 +59,15 @@ export function closeModal(): void {
 }
 
 export async function saveWorkflow(): Promise<void> {
+  const actions = getActions(actionsContainer());
   const payload = {
     name: (document.getElementById('wf-name') as HTMLInputElement).value,
     enabled: (document.getElementById('wf-enabled') as HTMLSelectElement).value === 'true',
-    trigger: {
+    when: {
       type: currentTriggerType(),
       path: triggerPathEl().value || null,
     },
-    continueOnError: (document.getElementById('wf-continue') as HTMLSelectElement).value === 'true',
-    conditions: getConditions(conditionsContainer()),
-    actions: getActions(actionsContainer()),
+    then: actions[0] ?? { type: '', parameters: {} },
   };
 
   const ok = editingId

@@ -14,8 +14,8 @@ export function renderWorkflows(workflows: Workflow[], callbacks: WorkflowTableC
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${w.name}</td>
-      <td>${w.trigger ? `${w.trigger.type}<br><small style="color:#888">${w.trigger.path ?? ''}</small>` : '–'}</td>
-      <td>${w.actions.length} Aktion(en)</td>
+      <td>${w.when.type}<br><small style="color:#888">${w.when.path ?? ''}</small></td>
+      <td>${w.then.type || '–'}</td>
       <td><span class="badge ${w.enabled ? 'badge-enabled' : 'badge-disabled'}">${w.enabled ? 'aktiv' : 'inaktiv'}</span></td>
       <td>${new Date(w.createdAt).toLocaleString('de')}</td>
       <td>

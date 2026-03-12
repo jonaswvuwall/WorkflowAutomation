@@ -1,1 +1,77 @@
-[]
+[
+  {
+    "id": "25b6ece0-4f34-4d0e-9e9d-c99b75edee83",
+    "name": "Workflow1",
+    "enabled": true,
+    "when": {
+      "type": "",
+      "path": null
+    },
+    "then": {
+      "type": "",
+      "parameters": {}
+    },
+    "createdAt": "2026-03-12T09:24:37.714643Z",
+    "updatedAt": "2026-03-12T09:24:37.7146846Z"
+  },
+  {
+    "id": "b2cd5d30-2e0c-4c4d-a6b5-93d82f9c7513",
+    "name": "",
+    "enabled": true,
+    "when": {
+      "type": "",
+      "path": null
+    },
+    "then": {
+      "type": "",
+      "parameters": {}
+    },
+    "createdAt": "2026-03-12T09:25:06.156472Z",
+    "updatedAt": "2026-03-12T09:25:06.1564721Z"
+  },
+  {
+    "id": "3ebdcf3e-614d-4a3d-945d-9cb320a83376",
+    "name": "",
+    "enabled": true,
+    "when": {
+      "type": "",
+      "path": null
+    },
+    "then": {
+      "type": "",
+      "parameters": {}
+    },
+    "createdAt": "2026-03-12T09:25:06.1583964Z",
+    "updatedAt": "2026-03-12T09:25:06.1583965Z"
+  },
+  {
+    "id": "dca21648-49ce-4b44-8afb-b6a62a174864",
+    "name": "",
+    "enabled": true,
+    "when": {
+      "type": "",
+      "path": null
+    },
+    "then": {
+      "type": "",
+      "parameters": {}
+    },
+    "createdAt": "2026-03-12T09:25:06.1622811Z",
+    "updatedAt": "2026-03-12T09:25:06.1622812Z"
+  },
+  {
+    "id": "d1d7da21-7942-4276-9f51-67d397d59264",
+    "name": "",
+    "enabled": true,
+    "when": {
+      "type": "",
+      "path": null
+    },
+    "then": {
+      "type": "",
+      "parameters": {}
+    },
+    "createdAt": "2026-03-12T09:25:06.1638069Z",
+    "updatedAt": "2026-03-12T09:25:06.163807Z"
+  }
+]

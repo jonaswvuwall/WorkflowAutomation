@@ -28,7 +28,7 @@
       <tr>
         <th>Name</th>
         <th>Trigger</th>
-        <th>Aktionen</th>
+        <th>Aktion</th>
         <th>Status</th>
         <th>Erstellt</th>
         <th></th>
@@ -47,8 +47,7 @@
         <th>Workflow ID</th>
         <th>Gestartet</th>
         <th>Status</th>
-        <th>Conditions met</th>
-        <th>Ausgeführte Aktionen</th>
+        <th>Ausgeführte Aktion</th>
         <th>Fehler</th>
       </tr>
     </thead>
@@ -80,19 +79,8 @@
     <label id="label-trigger-path">Trigger Pfad</label>
     <input id="wf-trigger-path" placeholder="z.B. C:/eingang" />
 
-    <label>Continue on Error</label>
-    <select id="wf-continue">
-      <option value="false">Nein</option>
-      <option value="true">Ja</option>
-    </select>
-
-    <label>Conditions <span class="hint">(alle müssen zutreffen)</span></label>
-    <div id="wf-conditions-container" class="editor-container"></div>
-    <button type="button" id="btn-add-condition" class="add-row-btn">+ Condition hinzufügen</button>
-
-    <label>Actions</label>
+    <label>Aktion</label>
     <div id="wf-actions-container" class="editor-container"></div>
-    <button type="button" id="btn-add-action" class="add-row-btn">+ Action hinzufügen</button>
 
     <div class="modal-footer">
       <button id="btn-modal-cancel">Abbrechen</button>

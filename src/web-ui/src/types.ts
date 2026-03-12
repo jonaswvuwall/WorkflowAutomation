@@ -9,12 +9,6 @@ export interface ActionResult {
   message?: string;
 }
 
-export interface Condition {
-  field: string;
-  operator: string;
-  value: string;
-}
-
 export interface WorkflowAction {
   type: string;
   parameters: Record<string, string>;
@@ -24,10 +18,8 @@ export interface Workflow {
   id: string;
   name: string;
   enabled: boolean;
-  trigger: WorkflowTrigger;
-  continueOnError: boolean;
-  conditions: Condition[];
-  actions: WorkflowAction[];
+  when: WorkflowTrigger;
+  then: WorkflowAction;
   createdAt: string;
 }
 
@@ -35,8 +27,7 @@ export interface Run {
   workflowId: string;
   triggeredAt: string;
   status: 'success' | 'failed';
-  conditionsMet: boolean;
-  actionsExecuted: ActionResult[];
+  actionExecuted?: ActionResult;
   error?: string;
 }
 
