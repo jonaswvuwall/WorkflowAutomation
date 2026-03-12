@@ -1,0 +1,42 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: monospace; background: #1a1a1a; color: #e0e0e0; padding: 20px; }
+h1 { color: #4fc3f7; margin-bottom: 20px; }
+h2 { color: #81c784; margin: 20px 0 10px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.status-bar { background: #2a2a2a; border: 1px solid #444; padding: 10px 15px; margin-bottom: 20px; display: flex; gap: 30px; }
+.status-bar span { color: #aaa; }
+.status-bar strong { color: #fff; }
+
+table { width: 100%; border-collapse: collapse; background: #2a2a2a; margin-bottom: 10px; }
+th { background: #333; color: #4fc3f7; text-align: left; padding: 8px 10px; font-size: 0.85rem; }
+td { padding: 8px 10px; border-bottom: 1px solid #333; font-size: 0.85rem; vertical-align: top; }
+tr:hover td { background: #2f2f2f; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem; }
+.badge-success  { background: #1b5e20; color: #a5d6a7; }
+.badge-failed   { background: #b71c1c; color: #ef9a9a; }
+.badge-enabled  { background: #1a3a4a; color: #4fc3f7; }
+.badge-disabled { background: #3a3a3a; color: #888; }
+
+button { background: #333; color: #e0e0e0; border: 1px solid #555; padding: 5px 12px; cursor: pointer; font-family: monospace; font-size: 0.8rem; }
+button:hover { background: #444; }
+button.primary { background: #1565c0; border-color: #1e88e5; }
+button.primary:hover { background: #1976d2; }
+button.danger { background: #7f0000; border-color: #c62828; }
+button.danger:hover { background: #c62828; }
+
+.actions-cell { display: flex; gap: 5px; }
+.toolbar { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+.section { margin-bottom: 30px; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10; justify-content: center; align-items: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #2a2a2a; border: 1px solid #555; padding: 20px; width: 600px; max-height: 80vh; overflow-y: auto; }
+.modal h3 { color: #4fc3f7; margin-bottom: 15px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px; }
+
+label { display: block; color: #aaa; font-size: 0.8rem; margin: 10px 0 4px; }
+input, textarea, select { width: 100%; background: #1a1a1a; border: 1px solid #555; color: #e0e0e0; padding: 6px 8px; font-family: monospace; font-size: 0.85rem; }
+textarea { height: 200px; resize: vertical; }
+
+pre { background: #111; padding: 10px; font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }

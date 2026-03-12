@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Workflow Engine</title>
+</head>
+<body>
+
+<h1>Workflow Engine</h1>
+
+<div class="status-bar" id="status-bar">
+  <span>Status: <strong id="s-status">–</strong></span>
+  <span>Workflows: <strong id="s-workflows">–</strong></span>
+  <span>Runs total: <strong id="s-runs">–</strong></span>
+  <span>Erfolg: <strong id="s-success">–</strong></span>
+  <span>Fehler: <strong id="s-failed">–</strong></span>
+  <button id="btn-refresh" style="margin-left:auto">Refresh</button>
+</div>
+
+<!-- Workflows -->
+<div class="section">
+  <h2>Workflows</h2>
+  <div class="toolbar">
+    <button id="btn-new-workflow" class="primary">+ Neuer Workflow</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Trigger</th>
+        <th>Aktionen</th>
+        <th>Status</th>
+        <th>Erstellt</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="workflows-body"></tbody>
+  </table>
+</div>
+
+<!-- Runs -->
+<div class="section">
+  <h2>Letzte Runs</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Workflow ID</th>
+        <th>Gestartet</th>
+        <th>Status</th>
+        <th>Conditions met</th>
+        <th>Ausgeführte Aktionen</th>
+        <th>Fehler</th>
+      </tr>
+    </thead>
+    <tbody id="runs-body"></tbody>
+  </table>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Workflow erstellen</h3>
+    <label>Name</label>
+    <input id="wf-name" placeholder="Workflow Name" />
+    <label>Enabled</label>
+    <select id="wf-enabled">
+      <option value="true">Ja</option>
+      <option value="false">Nein</option>
+    </select>
+    <label>Trigger Typ</label>
+    <input id="wf-trigger-type" placeholder="z.B. file_created" />
+    <label>Trigger Pfad</label>
+    <input id="wf-trigger-path" placeholder="z.B. C:/eingang" />
+    <label>Continue on Error</label>
+    <select id="wf-continue">
+      <option value="false">Nein</option>
+      <option value="true">Ja</option>
+    </select>
+    <label>Conditions (JSON-Array)</label>
+    <textarea id="wf-conditions">[]</textarea>
+    <label>Actions (JSON-Array)</label>
+    <textarea id="wf-actions">[]</textarea>
+    <div class="modal-footer">
+      <button id="btn-modal-cancel">Abbrechen</button>
+      <button id="btn-modal-save" class="primary">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
