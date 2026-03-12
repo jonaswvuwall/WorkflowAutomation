@@ -4,8 +4,7 @@
     "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
     "triggeredAt": "2026-03-12T09:01:12.4727014Z",
     "status": "success",
-    "conditionsMet": true,
-    "actionsExecuted": [],
+    "actionExecuted": null,
     "error": null
   },
   {
@@ -13,8 +12,7 @@
     "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
     "triggeredAt": "2026-03-12T09:01:16.6383313Z",
     "status": "success",
-    "conditionsMet": true,
-    "actionsExecuted": [],
+    "actionExecuted": null,
     "error": null
   },
   {
@@ -22,8 +20,7 @@
     "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
     "triggeredAt": "2026-03-12T09:01:16.9971585Z",
     "status": "success",
-    "conditionsMet": true,
-    "actionsExecuted": [],
+    "actionExecuted": null,
     "error": null
   },
   {
@@ -31,8 +28,7 @@
     "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
     "triggeredAt": "2026-03-12T09:01:17.1331291Z",
     "status": "success",
-    "conditionsMet": true,
-    "actionsExecuted": [],
+    "actionExecuted": null,
     "error": null
   },
   {
@@ -40,8 +36,7 @@
     "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
     "triggeredAt": "2026-03-12T09:01:17.2610654Z",
     "status": "success",
-    "conditionsMet": true,
-    "actionsExecuted": [],
+    "actionExecuted": null,
     "error": null
   },
   {
@@ -49,8 +44,31 @@
     "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
     "triggeredAt": "2026-03-12T09:02:14.5331186Z",
     "status": "success",
-    "conditionsMet": true,
-    "actionsExecuted": [],
+    "actionExecuted": null,
+    "error": null
+  },
+  {
+    "id": "abfea7aa-a361-4840-8a46-09c03400fb66",
+    "workflowId": "ef5c9ee2-bd15-4080-9b81-c1e476c2803a",
+    "triggeredAt": "2026-03-12T09:32:56.3647582Z",
+    "status": "success",
+    "actionExecuted": {
+      "type": "create_file",
+      "status": "success",
+      "message": "Created C:\\Users\\JonasWintrich\\develop\\workflow\\DIESE_DATEI_WURDE_ERSTELLT.txt"
+    },
+    "error": null
+  },
+  {
+    "id": "a752c927-f368-4a42-b845-b6464291844b",
+    "workflowId": "ef5c9ee2-bd15-4080-9b81-c1e476c2803a",
+    "triggeredAt": "2026-03-12T09:33:23.0979842Z",
+    "status": "success",
+    "actionExecuted": {
+      "type": "create_file",
+      "status": "success",
+      "message": "Created C:\\Users\\JonasWintrich\\develop\\workflow\\DIESE_DATEI_WURDE_ERSTELLT.txt"
+    },
     "error": null
   }
 ]

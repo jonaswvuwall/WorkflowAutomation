@@ -7,7 +7,7 @@ public sealed class FileWatcherService(
     ActionExecutor actionExecutor,
     ILogger<FileWatcherService> logger) : IHostedService, IDisposable
 {
-    private readonly List<FileSystemWatcher> _watchers = [];
+    private readonly Dictionary<string, FileSystemWatcher> _watchers = [];
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -22,17 +22,50 @@ public sealed class FileWatcherService(
         return Task.CompletedTask;
     }
 
+    public void Register(Workflow workflow)
+    {
+        Unregister(workflow.Id);
+
+        if (workflow.Enabled &&
+            (workflow.When.Type == "file_created" || workflow.When.Type == "file_modified") &&
+            !string.IsNullOrWhiteSpace(workflow.When.Path))
+        {
+            StartWatcher(workflow);
+        }
+    }
+
+    public void Unregister(string workflowId)
+    {
+        if (_watchers.Remove(workflowId, out var w))
+            w.Dispose();
+    }
+
     private void StartWatcher(Workflow workflow)
     {
         var path = workflow.When.Path!;
-        if (!Directory.Exists(path))
+
+        string watchDir;
+        string filter;
+
+        if (File.Exists(path))
+        {
+            watchDir = Path.GetDirectoryName(path)!;
+            filter = Path.GetFileName(path);
+        }
+        else if (Directory.Exists(path))
+        {
+            watchDir = path;
+            filter = "*.*";
+        }
+        else
         {
             logger.LogWarning("Watcher path does not exist, skipping: {Path}", path);
             return;
         }
 
-        var watcher = new FileSystemWatcher(path)
+        var watcher = new FileSystemWatcher(watchDir)
         {
+            Filter = filter,
             NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
             EnableRaisingEvents = true
         };
@@ -42,7 +75,7 @@ public sealed class FileWatcherService(
         else
             watcher.Changed += (_, e) => OnFileEvent(workflow, e.FullPath);
 
-        _watchers.Add(watcher);
+        _watchers[workflow.Id] = watcher;
         logger.LogInformation("Watching {Path} for {Type} (workflow: {Name})", path, workflow.When.Type, workflow.Name);
     }
 
@@ -80,7 +113,7 @@ public sealed class FileWatcherService(
 
     public void Dispose()
     {
-        foreach (var w in _watchers) w.Dispose();
+        foreach (var w in _watchers.Values) w.Dispose();
         _watchers.Clear();
     }
 }

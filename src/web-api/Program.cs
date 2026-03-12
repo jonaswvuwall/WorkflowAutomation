@@ -5,7 +5,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddSingleton<JsonDataService>();
 builder.Services.AddSingleton<ActionExecutor>();
-builder.Services.AddHostedService<FileWatcherService>();
+builder.Services.AddSingleton<FileWatcherService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<FileWatcherService>());
 builder.Services.AddHttpClient();
 builder.Services.AddCors(options =>
 {

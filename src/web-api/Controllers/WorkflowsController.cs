@@ -6,7 +6,7 @@ namespace WorkflowEngine.Controllers;
 
 [ApiController]
 [Route("api/workflows")]
-public class WorkflowsController(JsonDataService data, ActionExecutor actionExecutor) : ControllerBase
+public class WorkflowsController(JsonDataService data, ActionExecutor actionExecutor, FileWatcherService watcher) : ControllerBase
 {
     [HttpGet]
     public IActionResult GetAll() => Ok(data.GetWorkflows());
@@ -22,6 +22,7 @@ public class WorkflowsController(JsonDataService data, ActionExecutor actionExec
     public IActionResult Create([FromBody] Workflow workflow)
     {
         var created = data.AddWorkflow(workflow);
+        watcher.Register(created);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
@@ -29,14 +30,18 @@ public class WorkflowsController(JsonDataService data, ActionExecutor actionExec
     public IActionResult Update(string id, [FromBody] Workflow workflow)
     {
         var updated = data.UpdateWorkflow(id, workflow);
-        return updated is null ? NotFound() : Ok(updated);
+        if (updated is null) return NotFound();
+        watcher.Register(updated);
+        return Ok(updated);
     }
 
     [HttpDelete("{id}")]
     public IActionResult Delete(string id)
     {
         var deleted = data.DeleteWorkflow(id);
-        return deleted ? NoContent() : NotFound();
+        if (!deleted) return NotFound();
+        watcher.Unregister(id);
+        return NoContent();
     }
 
     [HttpPost("{id}/run")]
