@@ -40,3 +40,23 @@ input, textarea, select { width: 100%; background: #1a1a1a; border: 1px solid #5
 textarea { height: 200px; resize: vertical; }
 
 pre { background: #111; padding: 10px; font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+
+/* Condition / Action editors */
+.hint { color: #666; font-size: 0.75rem; }
+.editor-container { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.add-row-btn { width: auto; font-size: 0.78rem; padding: 3px 10px; color: #81c784; border-color: #81c784; background: transparent; margin-bottom: 8px; }
+.add-row-btn:hover { background: #1b2e1b; }
+
+.editor-row { display: flex; gap: 6px; align-items: center; background: #222; padding: 6px; border: 1px solid #3a3a3a; }
+.editor-row select, .editor-row input { width: auto; flex: 1; }
+
+.action-row { display: flex; flex-direction: column; gap: 6px; background: #222; padding: 8px; border: 1px solid #3a3a3a; }
+.action-row-header { display: flex; gap: 6px; align-items: center; }
+.action-row-header select { flex: 1; }
+.action-params { display: flex; flex-direction: column; gap: 6px; }
+.param-field label { display: block; color: #888; font-size: 0.75rem; margin-bottom: 2px; }
+.param-field input, .param-field textarea { width: 100%; }
+.param-field textarea { height: 60px; resize: vertical; }
+
+.remove-row-btn { flex-shrink: 0; width: 26px; padding: 0; color: #ef9a9a; border-color: #7f0000; background: transparent; font-size: 1rem; line-height: 1; }
+.remove-row-btn:hover { background: #7f0000; }

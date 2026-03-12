@@ -9,14 +9,25 @@ export interface ActionResult {
   message?: string;
 }
 
+export interface Condition {
+  field: string;
+  operator: string;
+  value: string;
+}
+
+export interface WorkflowAction {
+  type: string;
+  parameters: Record<string, string>;
+}
+
 export interface Workflow {
   id: string;
   name: string;
   enabled: boolean;
   trigger: WorkflowTrigger;
   continueOnError: boolean;
-  conditions: unknown[];
-  actions: unknown[];
+  conditions: Condition[];
+  actions: WorkflowAction[];
   createdAt: string;
 }
 

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "5a2fdc53-b9f4-4020-8537-a9d1fc234021",
+    "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
+    "triggeredAt": "2026-03-12T09:01:12.4727014Z",
+    "status": "success",
+    "conditionsMet": true,
+    "actionsExecuted": [],
+    "error": null
+  },
+  {
+    "id": "f10f606b-25e6-457c-b5c2-11a2dde8dff7",
+    "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
+    "triggeredAt": "2026-03-12T09:01:16.6383313Z",
+    "status": "success",
+    "conditionsMet": true,
+    "actionsExecuted": [],
+    "error": null
+  },
+  {
+    "id": "d440edd5-d91d-4b4a-b75c-2fa9ac9b72e4",
+    "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
+    "triggeredAt": "2026-03-12T09:01:16.9971585Z",
+    "status": "success",
+    "conditionsMet": true,
+    "actionsExecuted": [],
+    "error": null
+  },
+  {
+    "id": "f4ab8e87-cd43-4428-9afc-1c9a067546ea",
+    "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
+    "triggeredAt": "2026-03-12T09:01:17.1331291Z",
+    "status": "success",
+    "conditionsMet": true,
+    "actionsExecuted": [],
+    "error": null
+  },
+  {
+    "id": "40f9ef77-623c-4b0b-ad9d-e95655a9f666",
+    "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
+    "triggeredAt": "2026-03-12T09:01:17.2610654Z",
+    "status": "success",
+    "conditionsMet": true,
+    "actionsExecuted": [],
+    "error": null
+  },
+  {
+    "id": "bc826f5f-e5ae-444f-b69e-6fdbecf599a4",
+    "workflowId": "3875bb18-da85-43ab-9983-93f0c47ddabd",
+    "triggeredAt": "2026-03-12T09:02:14.5331186Z",
+    "status": "success",
+    "conditionsMet": true,
+    "actionsExecuted": [],
+    "error": null
+  }
+]

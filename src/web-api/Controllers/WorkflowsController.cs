@@ -6,7 +6,7 @@ namespace WorkflowEngine.Controllers;
 
 [ApiController]
 [Route("api/workflows")]
-public class WorkflowsController(JsonDataService data) : ControllerBase
+public class WorkflowsController(JsonDataService data, ConditionEvaluator conditionEvaluator, ActionExecutor actionExecutor) : ControllerBase
 {
     [HttpGet]
     public IActionResult GetAll() => Ok(data.GetWorkflows());
@@ -40,24 +40,39 @@ public class WorkflowsController(JsonDataService data) : ControllerBase
     }
 
     [HttpPost("{id}/run")]
-    public IActionResult Run(string id)
+    public async Task<IActionResult> Run(string id)
     {
         var workflow = data.GetWorkflow(id);
         if (workflow is null) return NotFound();
 
-        // Simulate execution
+        var context = TriggerContext.Manual();
+        var conditionsMet = conditionEvaluator.Evaluate(workflow.Conditions, context);
+
+        var actionResults = new List<ActionResult>();
+        var status = "success";
+
+        if (conditionsMet)
+        {
+            foreach (var action in workflow.Actions)
+            {
+                var result = await actionExecutor.ExecuteAsync(action, context);
+                actionResults.Add(result);
+                if (result.Status == "failed" && !workflow.ContinueOnError)
+                {
+                    status = "failed";
+                    break;
+                }
+                if (result.Status == "failed") status = "failed";
+            }
+        }
+
         var run = new Run
         {
             WorkflowId = id,
             TriggeredAt = DateTime.UtcNow,
-            ConditionsMet = true,
-            ActionsExecuted = workflow.Actions.Select(a => new WorkflowEngine.Models.ActionResult
-            {
-                Type = a.Type,
-                Status = "success",
-                Message = $"Action '{a.Type}' simulated successfully"
-            }).ToList(),
-            Status = "success"
+            ConditionsMet = conditionsMet,
+            ActionsExecuted = actionResults,
+            Status = status
         };
 
         var saved = data.AddRun(run);
