@@ -6,8 +6,7 @@ public class Run
     public string WorkflowId { get; set; } = string.Empty;
     public DateTime TriggeredAt { get; set; } = DateTime.UtcNow;
     public string Status { get; set; } = "pending";
-    public bool ConditionsMet { get; set; } = true;
-    public List<ActionResult> ActionsExecuted { get; set; } = [];
+    public ActionResult? ActionExecuted { get; set; }
     public string? Error { get; set; }
 }
 

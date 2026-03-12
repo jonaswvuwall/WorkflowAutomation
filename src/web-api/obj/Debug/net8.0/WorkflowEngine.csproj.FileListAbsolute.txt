@@ -25,3 +25,5 @@ C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\refint\Work
 C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\WorkflowEngine.pdb
 C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\WorkflowEngine.genruntimeconfig.cache
 C:\Users\JonasWintrich\develop\workflow\src\web-api\obj\Debug\net8.0\ref\WorkflowEngine.dll
+C:\Users\JonasWintrich\develop\workflow\src\web-api\bin\Debug\net8.0\data\runs.json
+C:\Users\JonasWintrich\develop\workflow\src\web-api\bin\Debug\net8.0\data\workflows.json

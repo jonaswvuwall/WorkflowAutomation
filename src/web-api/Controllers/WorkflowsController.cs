@@ -6,7 +6,7 @@ namespace WorkflowEngine.Controllers;
 
 [ApiController]
 [Route("api/workflows")]
-public class WorkflowsController(JsonDataService data, ConditionEvaluator conditionEvaluator, ActionExecutor actionExecutor) : ControllerBase
+public class WorkflowsController(JsonDataService data, ActionExecutor actionExecutor) : ControllerBase
 {
     [HttpGet]
     public IActionResult GetAll() => Ok(data.GetWorkflows());
@@ -46,37 +46,17 @@ public class WorkflowsController(JsonDataService data, ConditionEvaluator condit
         if (workflow is null) return NotFound();
 
         var context = TriggerContext.Manual();
-        var conditionsMet = conditionEvaluator.Evaluate(workflow.Conditions, context);
-
-        var actionResults = new List<ActionResult>();
-        var status = "success";
-
-        if (conditionsMet)
-        {
-            foreach (var action in workflow.Actions)
-            {
-                var result = await actionExecutor.ExecuteAsync(action, context);
-                actionResults.Add(result);
-                if (result.Status == "failed" && !workflow.ContinueOnError)
-                {
-                    status = "failed";
-                    break;
-                }
-                if (result.Status == "failed") status = "failed";
-            }
-        }
+        var result = await actionExecutor.ExecuteAsync(workflow.Then, context);
 
         var run = new Run
         {
             WorkflowId = id,
             TriggeredAt = DateTime.UtcNow,
-            ConditionsMet = conditionsMet,
-            ActionsExecuted = actionResults,
-            Status = status
+            ActionExecuted = result,
+            Status = result.Status
         };
 
-        var saved = data.AddRun(run);
-        return Ok(saved);
+        return Ok(data.AddRun(run));
     }
 
     [HttpGet("{id}/runs")]

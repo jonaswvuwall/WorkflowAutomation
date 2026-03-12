@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/JonasWintrich/develop/workflow/**)",
+      "Bash(dotnet build:*)"
+    ]
+  }
+}

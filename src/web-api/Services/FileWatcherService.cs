@@ -4,7 +4,6 @@ namespace WorkflowEngine.Services;
 
 public sealed class FileWatcherService(
     JsonDataService data,
-    ConditionEvaluator conditionEvaluator,
     ActionExecutor actionExecutor,
     ILogger<FileWatcherService> logger) : IHostedService, IDisposable
 {
@@ -13,9 +12,9 @@ public sealed class FileWatcherService(
     public Task StartAsync(CancellationToken cancellationToken)
     {
         var workflows = data.GetWorkflows()
-            .Where(w => w.Enabled && w.Trigger is not null &&
-                        (w.Trigger.Type == "file_created" || w.Trigger.Type == "file_modified") &&
-                        !string.IsNullOrWhiteSpace(w.Trigger.Path));
+            .Where(w => w.Enabled &&
+                        (w.When.Type == "file_created" || w.When.Type == "file_modified") &&
+                        !string.IsNullOrWhiteSpace(w.When.Path));
 
         foreach (var workflow in workflows)
             StartWatcher(workflow);
@@ -25,7 +24,7 @@ public sealed class FileWatcherService(
 
     private void StartWatcher(Workflow workflow)
     {
-        var path = workflow.Trigger!.Path!;
+        var path = workflow.When.Path!;
         if (!Directory.Exists(path))
         {
             logger.LogWarning("Watcher path does not exist, skipping: {Path}", path);
@@ -38,13 +37,13 @@ public sealed class FileWatcherService(
             EnableRaisingEvents = true
         };
 
-        if (workflow.Trigger.Type == "file_created")
+        if (workflow.When.Type == "file_created")
             watcher.Created += (_, e) => OnFileEvent(workflow, e.FullPath);
         else
             watcher.Changed += (_, e) => OnFileEvent(workflow, e.FullPath);
 
         _watchers.Add(watcher);
-        logger.LogInformation("Watching {Path} for {Type} (workflow: {Name})", path, workflow.Trigger.Type, workflow.Name);
+        logger.LogInformation("Watching {Path} for {Type} (workflow: {Name})", path, workflow.When.Type, workflow.Name);
     }
 
     private void OnFileEvent(Workflow workflow, string fullPath)
@@ -53,38 +52,18 @@ public sealed class FileWatcherService(
         {
             try
             {
-                var context = TriggerContext.FromFile(workflow.Trigger!.Type, fullPath);
-                var conditionsMet = conditionEvaluator.Evaluate(workflow.Conditions, context);
-
-                var actionResults = new List<ActionResult>();
-                var status = "success";
-
-                if (conditionsMet)
-                {
-                    foreach (var action in workflow.Actions)
-                    {
-                        var result = await actionExecutor.ExecuteAsync(action, context);
-                        actionResults.Add(result);
-                        if (result.Status == "failed" && !workflow.ContinueOnError)
-                        {
-                            status = "failed";
-                            break;
-                        }
-                        if (result.Status == "failed") status = "failed";
-                    }
-                }
+                var context = TriggerContext.FromFile(workflow.When.Type, fullPath);
+                var result = await actionExecutor.ExecuteAsync(workflow.Then, context);
 
                 var run = new Run
                 {
                     WorkflowId = workflow.Id,
                     TriggeredAt = DateTime.UtcNow,
-                    ConditionsMet = conditionsMet,
-                    ActionsExecuted = actionResults,
-                    Status = conditionsMet ? status : "success"
+                    ActionExecuted = result,
+                    Status = result.Status
                 };
                 data.AddRun(run);
-                logger.LogInformation("Auto-run for workflow {Name}: conditionsMet={Met}, status={Status}",
-                    workflow.Name, conditionsMet, run.Status);
+                logger.LogInformation("Auto-run for workflow {Name}: status={Status}", workflow.Name, run.Status);
             }
             catch (Exception ex)
             {

@@ -4,7 +4,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddSingleton<JsonDataService>();
-builder.Services.AddSingleton<ConditionEvaluator>();
 builder.Services.AddSingleton<ActionExecutor>();
 builder.Services.AddHostedService<FileWatcherService>();
 builder.Services.AddHttpClient();
