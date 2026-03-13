@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Read(//c/Users/JonasWintrich/develop/workflow/**)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(find /c/Users/JonasWintrich/develop/workflow/src/web-ui/src -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))",
+      "Bash(npm install:*)"
     ]
   }
 }

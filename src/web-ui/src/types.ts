@@ -1,38 +1,97 @@
-export interface WorkflowTrigger {
-  type: string;
-  path?: string | null;
+// ── Module manifests (from GET /api/modules) ──────────────────────────────
+
+export interface SelectOption {
+  value: string;
+  label: string;
 }
 
-export interface ActionResult {
-  type: string;
-  status: 'success' | 'failed';
-  message?: string;
+export interface ParameterSchema {
+  key:      string;
+  label:    string;
+  type:     'text' | 'textarea' | 'select' | 'number' | 'toggle';
+  required: boolean;
+  options?: SelectOption[];
 }
 
-export interface WorkflowAction {
-  type: string;
-  parameters: Record<string, string>;
+export interface ModuleManifest {
+  id:          string;
+  name:        string;
+  description: string;
+  category:    string;
+  parameters:  ParameterSchema[];
 }
 
-export interface Workflow {
-  id: string;
-  name: string;
-  enabled: boolean;
-  when: WorkflowTrigger;
-  then: WorkflowAction;
-  createdAt: string;
+export interface ModulesResponse {
+  events:  ModuleManifest[];
+  actions: ModuleManifest[];
+}
+
+// ── Custom module definitions ──────────────────────────────────────────────
+
+export interface CustomModuleDefinition {
+  id:             string;
+  name:           string;
+  description:    string;
+  category:       string;
+  moduleType:     'event' | 'action';
+  baseType:       'script' | 'http_request';
+  scriptContent?: string;
+  httpMethod?:    string;
+  httpUrl?:       string;
+  httpBody?:      string;
+  parameters:     ParameterSchema[];
+}
+
+// ── Data model ─────────────────────────────────────────────────────────────
+
+export interface NodePosition {
+  x: number;
+  y: number;
+}
+
+export interface EventDefinition {
+  id:            string;
+  name:          string;
+  enabled:       boolean;
+  moduleId:      string;
+  config:        Record<string, string>;
+  firstActionId: string | null;
+  position:      NodePosition;
+}
+
+export interface ActionDefinition {
+  id:           string;
+  name:         string;
+  moduleId:     string;
+  config:       Record<string, string>;
+  nextActionId: string | null;
+  position:     NodePosition;
+}
+
+// ── Runs ──────────────────────────────────────────────────────────────────
+
+export interface ActionExecutionResult {
+  actionId:  string;
+  moduleId:  string;
+  status:    'success' | 'failed';
+  message?:  string;
 }
 
 export interface Run {
-  workflowId: string;
-  triggeredAt: string;
-  status: 'success' | 'failed';
-  actionExecuted?: ActionResult;
-  error?: string;
+  id:            string;
+  eventId:       string;
+  eventName:     string;
+  triggeredAt:   string;
+  status:        'success' | 'failed' | 'pending';
+  actionResults: ActionExecutionResult[];
+  error?:        string;
 }
 
+// ── Status ────────────────────────────────────────────────────────────────
+
 export interface StatusData {
-  status: string;
-  workflows: { enabled: number; total: number };
-  runs: { total: number; success: number; failed: number };
+  status:    string;
+  startedAt: string;
+  events:    { total: number; enabled: number };
+  runs:      { total: number; success: number; failed: number };
 }
