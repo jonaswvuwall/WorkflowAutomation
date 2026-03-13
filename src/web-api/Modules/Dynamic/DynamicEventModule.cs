@@ -19,8 +19,8 @@ public sealed class DynamicEventModule(CustomModuleDefinition def) : IEventModul
         Parameters  = def.Parameters
     };
 
-    public void Register(string eventId, string eventName,
-                         Dictionary<string, string> config, Func<TriggerContext, Task> onFired)
+    public void Register(string eventId, Dictionary<string, string> config,
+                         Func<Dictionary<string, string>, Task> onFired)
     {
         // Custom events are triggered manually — no background listener needed.
     }

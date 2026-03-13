@@ -1,20 +1,12 @@
 namespace WorkflowEngine.Modules;
 
-public class NodeExecutionResult
-{
-    public string  NodeId    { get; set; } = string.Empty;
-    public string  ModuleId  { get; set; } = string.Empty;
-    public string  Status    { get; set; } = string.Empty;  // "success" | "failed"
-    public string? Message   { get; set; }
-}
+/// <summary>Returned by every action module — just success/fail and a human-readable message.</summary>
+public record ActionResult(bool Success, string Message = "");
 
 public interface IActionModule
 {
     string ModuleId { get; }
     ModuleManifest Manifest { get; }
 
-    Task<NodeExecutionResult> ExecuteAsync(
-        string nodeId,
-        Dictionary<string, string> config,
-        TriggerContext context);
+    Task<ActionResult> ExecuteAsync(Dictionary<string, string> config, TriggerContext context);
 }

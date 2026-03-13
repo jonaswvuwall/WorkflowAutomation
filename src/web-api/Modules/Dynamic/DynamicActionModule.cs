@@ -20,20 +20,19 @@ public sealed class DynamicActionModule(
         Parameters  = def.Parameters
     };
 
-    public Task<NodeExecutionResult> ExecuteAsync(
-        string nodeId, Dictionary<string, string> config, TriggerContext context)
+    public Task<ActionResult> ExecuteAsync(Dictionary<string, string> config, TriggerContext context)
     {
         return def.BaseType switch
         {
-            "script"       => RunScript(nodeId, config),
-            "http_request" => RunHttp(nodeId, config),
-            _ => Task.FromResult(Fail(nodeId, $"Unknown base type: {def.BaseType}"))
+            "script"       => RunScript(config),
+            "http_request" => RunHttp(config),
+            _ => Task.FromResult(new ActionResult(false, $"Unknown base type: {def.BaseType}"))
         };
     }
 
     // ── Script execution ─────────────────────────────────────────────────────
 
-    private async Task<NodeExecutionResult> RunScript(string nodeId, Dictionary<string, string> config)
+    private async Task<ActionResult> RunScript(Dictionary<string, string> config)
     {
         var script = Substitute(def.ScriptContent ?? "", config);
         try
@@ -56,21 +55,21 @@ public sealed class DynamicActionModule(
             if (process.ExitCode != 0)
             {
                 logger.LogWarning("Script module {Id} exited {Code}: {Err}", def.Id, process.ExitCode, stderr);
-                return Fail(nodeId, string.IsNullOrWhiteSpace(stderr) ? $"Exit code {process.ExitCode}" : stderr.Trim());
+                return new ActionResult(false, string.IsNullOrWhiteSpace(stderr) ? $"Exit code {process.ExitCode}" : stderr.Trim());
             }
 
-            return Ok(nodeId, stdout.Trim());
+            return new ActionResult(true, stdout.Trim());
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Script module {Id} threw", def.Id);
-            return Fail(nodeId, ex.Message);
+            return new ActionResult(false, ex.Message);
         }
     }
 
     // ── HTTP request ──────────────────────────────────────────────────────────
 
-    private async Task<NodeExecutionResult> RunHttp(string nodeId, Dictionary<string, string> config)
+    private async Task<ActionResult> RunHttp(Dictionary<string, string> config)
     {
         var url    = Substitute(def.HttpUrl  ?? "", config);
         var body   = Substitute(def.HttpBody ?? "{}", config);
@@ -85,14 +84,12 @@ public sealed class DynamicActionModule(
 
             var resp   = await client.SendAsync(request);
             var status = (int)resp.StatusCode;
-            return resp.IsSuccessStatusCode
-                ? Ok(nodeId, $"HTTP {status}")
-                : Fail(nodeId, $"HTTP {status}");
+            return new ActionResult(resp.IsSuccessStatusCode, $"HTTP {status}");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "HTTP module {Id} threw", def.Id);
-            return Fail(nodeId, ex.Message);
+            return new ActionResult(false, ex.Message);
         }
     }
 
@@ -105,10 +102,4 @@ public sealed class DynamicActionModule(
             template = template.Replace($"{{{{{key}}}}}", val, StringComparison.OrdinalIgnoreCase);
         return template;
     }
-
-    private NodeExecutionResult Ok(string nodeId, string msg)
-        => new() { NodeId = nodeId, ModuleId = ModuleId, Status = "success", Message = msg };
-
-    private NodeExecutionResult Fail(string nodeId, string msg)
-        => new() { NodeId = nodeId, ModuleId = ModuleId, Status = "failed", Message = msg };
 }

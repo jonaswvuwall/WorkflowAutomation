@@ -13,6 +13,8 @@ public class ParameterSchema
     /// <summary>Allowed: "text" | "textarea" | "select" | "number" | "toggle"</summary>
     public string Type     { get; set; } = "text";
     public bool   Required { get; set; }
+    /// <summary>Pre-filled value when a new node is created from this template.</summary>
+    public string? Default { get; set; }
     public List<SelectOption> Options { get; set; } = [];
 }
 

@@ -13,8 +13,8 @@ public sealed class ManualEventModule : IEventModule
         Parameters  = []
     };
 
-    public void Register(string eventId, string eventName,
-                         Dictionary<string, string> config, Func<TriggerContext, Task> onFired)
+    public void Register(string eventId, Dictionary<string, string> config,
+                         Func<Dictionary<string, string>, Task> onFired)
     {
         // No background listener needed — manual triggers are fired via API
     }

@@ -12,22 +12,15 @@ public sealed class LogActionModule(ILogger<LogActionModule> logger) : IActionMo
         Category    = "General",
         Parameters  =
         [
-            new ParameterSchema { Key = "message", Label = "Message", Type = "textarea", Required = false }
+            new ParameterSchema { Key = "message", Label = "Message", Type = "textarea", Required = false, Default = "{{eventName}} triggered" }
         ]
     };
 
-    public Task<NodeExecutionResult> ExecuteAsync(
-        string nodeId, Dictionary<string, string> config, TriggerContext context)
+    public Task<ActionResult> ExecuteAsync(Dictionary<string, string> config, TriggerContext context)
     {
         var p       = new ModuleParameters(config);
         var message = p.Get("message", "(no message)");
         logger.LogInformation("[workflow log] {Message}", message);
-        return Task.FromResult(new NodeExecutionResult
-        {
-            NodeId   = nodeId,
-            ModuleId = ModuleId,
-            Status   = "success",
-            Message  = message
-        });
+        return Task.FromResult(new ActionResult(true, message));
     }
 }

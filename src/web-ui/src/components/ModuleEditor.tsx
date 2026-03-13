@@ -146,6 +146,12 @@ export function ModuleEditor({ initial, onSave, onCancel }: ModuleEditorProps) {
               <option value="number">Number</option>
               <option value="toggle">Toggle</option>
             </select>
+            <input
+              placeholder="Default"
+              value={p.default ?? ''}
+              onChange={e => updateParam(i, { default: e.target.value })}
+              className="module-editor__param-default"
+            />
             <label className="module-editor__required">
               <input
                 type="checkbox"

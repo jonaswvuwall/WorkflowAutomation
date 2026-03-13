@@ -15,13 +15,14 @@ public sealed class FileWatcherEventModule(ILogger<FileWatcherEventModule> logge
         Category    = "File System",
         Parameters  =
         [
-            new ParameterSchema { Key = "path",  Label = "Watch Path", Type = "text",   Required = true },
+            new ParameterSchema { Key = "path",  Label = "Watch Path", Type = "text",   Required = true, Default = "" },
             new ParameterSchema
             {
                 Key      = "event",
                 Label    = "Event",
                 Type     = "select",
                 Required = true,
+                Default  = "created",
                 Options  =
                 [
                     new SelectOption { Value = "created",  Label = "File Created"  },
@@ -31,15 +32,14 @@ public sealed class FileWatcherEventModule(ILogger<FileWatcherEventModule> logge
         ]
     };
 
-    public void Register(string eventId, string eventName,
-                         Dictionary<string, string> config,
-                         Func<TriggerContext, Task> onFired)
+    public void Register(string eventId, Dictionary<string, string> config,
+                         Func<Dictionary<string, string>, Task> onFired)
     {
         Unregister(eventId);
 
         if (!config.TryGetValue("path", out var path) || string.IsNullOrWhiteSpace(path))
         {
-            logger.LogWarning("FileWatcher event {EventId} ({Name}): no path configured", eventId, eventName);
+            logger.LogWarning("FileWatcher event {EventId}: no path configured", eventId);
             return;
         }
 
@@ -78,18 +78,11 @@ public sealed class FileWatcherEventModule(ILogger<FileWatcherEventModule> logge
             {
                 try
                 {
-                    var ctx = new TriggerContext
+                    await onFired(new Dictionary<string, string>
                     {
-                        EventId       = eventId,
-                        EventName     = eventName,
-                        EventModuleId = ModuleId,
-                        Data          = new Dictionary<string, string>
-                        {
-                            ["filePath"] = e.FullPath,
-                            ["fileName"] = Path.GetFileName(e.FullPath)
-                        }
-                    };
-                    await onFired(ctx);
+                        ["filePath"] = e.FullPath,
+                        ["fileName"] = Path.GetFileName(e.FullPath)
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -104,8 +97,7 @@ public sealed class FileWatcherEventModule(ILogger<FileWatcherEventModule> logge
             watcher.Changed += handler;
 
         _watchers[eventId] = watcher;
-        logger.LogInformation("Watching {Path} for {Event} (event: {EventId}, name: {Name})",
-            path, eventType, eventId, eventName);
+        logger.LogInformation("Watching {Path} for {Event} (event: {EventId})", path, eventType, eventId);
     }
 
     public void Unregister(string eventId)

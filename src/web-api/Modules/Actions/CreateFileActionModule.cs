@@ -12,13 +12,12 @@ public sealed class CreateFileActionModule : IActionModule
         Category    = "File System",
         Parameters  =
         [
-            new ParameterSchema { Key = "path",    Label = "File Path", Type = "text",     Required = true  },
-            new ParameterSchema { Key = "content", Label = "Content",   Type = "textarea", Required = false }
+            new ParameterSchema { Key = "path",    Label = "File Path", Type = "text",     Required = true,  Default = "" },
+            new ParameterSchema { Key = "content", Label = "Content",   Type = "textarea", Required = false, Default = "" }
         ]
     };
 
-    public async Task<NodeExecutionResult> ExecuteAsync(
-        string nodeId, Dictionary<string, string> config, TriggerContext context)
+    public async Task<ActionResult> ExecuteAsync(Dictionary<string, string> config, TriggerContext context)
     {
         var p = new ModuleParameters(config);
         try
@@ -29,11 +28,8 @@ public sealed class CreateFileActionModule : IActionModule
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
             await File.WriteAllTextAsync(path, content);
-            return Ok(nodeId, $"Created {path}");
+            return new ActionResult(true, $"Created {path}");
         }
-        catch (Exception ex) { return Fail(nodeId, ex.Message); }
+        catch (Exception ex) { return new ActionResult(false, ex.Message); }
     }
-
-    private NodeExecutionResult Ok(string nodeId, string msg)   => new() { NodeId = nodeId, ModuleId = ModuleId, Status = "success", Message = msg };
-    private NodeExecutionResult Fail(string nodeId, string msg) => new() { NodeId = nodeId, ModuleId = ModuleId, Status = "failed",  Message = msg };
 }

@@ -14,13 +14,12 @@ public sealed class SendWebhookActionModule(IHttpClientFactory httpClientFactory
         Category    = "HTTP",
         Parameters  =
         [
-            new ParameterSchema { Key = "url",  Label = "URL",         Type = "text",     Required = true  },
-            new ParameterSchema { Key = "body", Label = "Request Body", Type = "textarea", Required = false }
+            new ParameterSchema { Key = "url",  Label = "URL",         Type = "text",     Required = true,  Default = "" },
+            new ParameterSchema { Key = "body", Label = "Request Body", Type = "textarea", Required = false, Default = "{\n  \"event\": \"{{eventName}}\"\n}" }
         ]
     };
 
-    public async Task<NodeExecutionResult> ExecuteAsync(
-        string nodeId, Dictionary<string, string> config, TriggerContext context)
+    public async Task<ActionResult> ExecuteAsync(Dictionary<string, string> config, TriggerContext context)
     {
         var p = new ModuleParameters(config);
         try
@@ -30,17 +29,11 @@ public sealed class SendWebhookActionModule(IHttpClientFactory httpClientFactory
             var client = httpClientFactory.CreateClient();
             var resp   = await client.PostAsync(url, new StringContent(body, Encoding.UTF8, "application/json"));
             var status = (int)resp.StatusCode;
-            return new NodeExecutionResult
-            {
-                NodeId   = nodeId,
-                ModuleId = ModuleId,
-                Status   = resp.IsSuccessStatusCode ? "success" : "failed",
-                Message  = $"HTTP {status}"
-            };
+            return new ActionResult(resp.IsSuccessStatusCode, $"HTTP {status}");
         }
         catch (Exception ex)
         {
-            return new NodeExecutionResult { NodeId = nodeId, ModuleId = ModuleId, Status = "failed", Message = ex.Message };
+            return new ActionResult(false, ex.Message);
         }
     }
 }

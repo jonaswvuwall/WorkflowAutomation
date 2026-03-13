@@ -44,10 +44,15 @@ public sealed class WorkflowDispatcher(
         }
 
         module.Register(
-            eventId:   evt.Id,
-            eventName: evt.Name,
-            config:    evt.Config,
-            onFired:   ctx => OnEventFired(ctx, evt));
+            eventId: evt.Id,
+            config:  evt.Config,
+            onFired: data => OnEventFired(new TriggerContext
+            {
+                EventId       = evt.Id,
+                EventName     = evt.Name,
+                EventModuleId = evt.ModuleId,
+                Data          = data
+            }, evt));
     }
 
     private void UnregisterInternal(string eventId)
@@ -60,7 +65,7 @@ public sealed class WorkflowDispatcher(
     public async Task OnEventFired(TriggerContext context, EventDefinition evt)
     {
         var allActions = data.GetAllActions();
-        var results    = new List<NodeExecutionResult>();
+        var results    = new List<ActionExecutionResult>();
         var status     = "success";
 
         var actionId = evt.FirstActionId;
@@ -78,16 +83,22 @@ public sealed class WorkflowDispatcher(
             if (module is null)
             {
                 logger.LogWarning("No action module for '{ModuleId}' (action {ActionId})", actionDef.ModuleId, actionId);
-                results.Add(new NodeExecutionResult { NodeId = actionId, ModuleId = actionDef.ModuleId, Status = "failed", Message = $"Unknown module '{actionDef.ModuleId}'" });
+                results.Add(new ActionExecutionResult { ActionId = actionId, ModuleId = actionDef.ModuleId, Status = "failed", Message = $"Unknown module '{actionDef.ModuleId}'" });
                 status = "failed";
                 break;
             }
 
             try
             {
-                var result = await module.ExecuteAsync(actionDef.Id, actionDef.Config, context);
-                results.Add(result);
-                if (result.Status == "failed")
+                var result = await module.ExecuteAsync(actionDef.Config, context);
+                results.Add(new ActionExecutionResult
+                {
+                    ActionId = actionId,
+                    ModuleId = actionDef.ModuleId,
+                    Status   = result.Success ? "success" : "failed",
+                    Message  = result.Message
+                });
+                if (!result.Success)
                 {
                     status = "failed";
                     break;
@@ -96,7 +107,7 @@ public sealed class WorkflowDispatcher(
             catch (Exception ex)
             {
                 logger.LogError(ex, "Action module {ModuleId} threw (action {ActionId})", actionDef.ModuleId, actionId);
-                results.Add(new NodeExecutionResult { NodeId = actionId, ModuleId = actionDef.ModuleId, Status = "failed", Message = ex.Message });
+                results.Add(new ActionExecutionResult { ActionId = actionId, ModuleId = actionDef.ModuleId, Status = "failed", Message = ex.Message });
                 status = "failed";
                 break;
             }

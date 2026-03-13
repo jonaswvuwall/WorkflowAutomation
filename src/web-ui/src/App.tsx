@@ -116,15 +116,23 @@ function WorkflowEditor() {
     const moduleName = e.dataTransfer.getData('application/wf-module-name');
     if (!moduleId) return;
 
+    // Pre-fill config from template defaults
+    const allManifests = [...modules.events, ...modules.actions];
+    const manifest = allManifests.find(m => m.id === moduleId);
+    const defaultConfig: Record<string, string> = {};
+    manifest?.parameters.forEach(p => {
+      if (p.default !== undefined) defaultConfig[p.key] = p.default;
+    });
+
     const position = rfInstance.screenToFlowPosition({ x: e.clientX, y: e.clientY });
     const newNode: Node<WorkflowNodeData> = {
       id:       crypto.randomUUID(),
       type:     nodeType,
       position,
-      data: { label: moduleName, moduleId, config: {}, nodeType },
+      data: { label: moduleName, moduleId, config: defaultConfig, nodeType },
     };
     setNodes(nds => [...nds, newNode]);
-  }, [setNodes]);
+  }, [setNodes, modules]);
 
   const handleRun = useCallback(async (id: string) => {
     await runEvent(id);

@@ -12,12 +12,11 @@ public sealed class DeleteFileActionModule : IActionModule
         Category    = "File System",
         Parameters  =
         [
-            new ParameterSchema { Key = "path", Label = "File Path", Type = "text", Required = true }
+            new ParameterSchema { Key = "path", Label = "File Path", Type = "text", Required = true, Default = "" }
         ]
     };
 
-    public Task<NodeExecutionResult> ExecuteAsync(
-        string nodeId, Dictionary<string, string> config, TriggerContext context)
+    public Task<ActionResult> ExecuteAsync(Dictionary<string, string> config, TriggerContext context)
     {
         var p = new ModuleParameters(config);
         try
@@ -25,11 +24,8 @@ public sealed class DeleteFileActionModule : IActionModule
             var path = p.Require("path");
             if (File.Exists(path))
                 File.Delete(path);
-            return Task.FromResult(Ok(nodeId, $"Deleted {path}"));
+            return Task.FromResult(new ActionResult(true, $"Deleted {path}"));
         }
-        catch (Exception ex) { return Task.FromResult(Fail(nodeId, ex.Message)); }
+        catch (Exception ex) { return Task.FromResult(new ActionResult(false, ex.Message)); }
     }
-
-    private NodeExecutionResult Ok(string nodeId, string msg)   => new() { NodeId = nodeId, ModuleId = ModuleId, Status = "success", Message = msg };
-    private NodeExecutionResult Fail(string nodeId, string msg) => new() { NodeId = nodeId, ModuleId = ModuleId, Status = "failed",  Message = msg };
 }

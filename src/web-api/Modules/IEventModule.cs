@@ -6,11 +6,11 @@ public interface IEventModule
     ModuleManifest Manifest { get; }
 
     /// <summary>
-    /// Register an event. When it fires, call onFired with the assembled TriggerContext.
-    /// eventId is the EventDefinition.Id.
+    /// Start listening for this event. Call onFired with any extra data when the event occurs
+    /// (e.g. { "filePath": "..." }). The dispatcher builds the full TriggerContext.
     /// </summary>
-    void Register(string eventId, string eventName,
-                  Dictionary<string, string> config, Func<TriggerContext, Task> onFired);
+    void Register(string eventId, Dictionary<string, string> config,
+                  Func<Dictionary<string, string>, Task> onFired);
 
     void Unregister(string eventId);
 }

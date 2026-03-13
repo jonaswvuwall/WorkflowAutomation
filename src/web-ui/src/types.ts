@@ -10,6 +10,7 @@ export interface ParameterSchema {
   label:    string;
   type:     'text' | 'textarea' | 'select' | 'number' | 'toggle';
   required: boolean;
+  default?: string;
   options?: SelectOption[];
 }
 

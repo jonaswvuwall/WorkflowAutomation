@@ -12,13 +12,12 @@ public sealed class MoveFileActionModule : IActionModule
         Category    = "File System",
         Parameters  =
         [
-            new ParameterSchema { Key = "source",      Label = "Source Path",      Type = "text", Required = true },
-            new ParameterSchema { Key = "destination", Label = "Destination Path", Type = "text", Required = true }
+            new ParameterSchema { Key = "source",      Label = "Source Path",      Type = "text", Required = true, Default = "" },
+            new ParameterSchema { Key = "destination", Label = "Destination Path", Type = "text", Required = true, Default = "" }
         ]
     };
 
-    public Task<NodeExecutionResult> ExecuteAsync(
-        string nodeId, Dictionary<string, string> config, TriggerContext context)
+    public Task<ActionResult> ExecuteAsync(Dictionary<string, string> config, TriggerContext context)
     {
         var p = new ModuleParameters(config);
         try
@@ -29,11 +28,8 @@ public sealed class MoveFileActionModule : IActionModule
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
             File.Move(src, dst, overwrite: true);
-            return Task.FromResult(Ok(nodeId, $"Moved {src} → {dst}"));
+            return Task.FromResult(new ActionResult(true, $"Moved {src} → {dst}"));
         }
-        catch (Exception ex) { return Task.FromResult(Fail(nodeId, ex.Message)); }
+        catch (Exception ex) { return Task.FromResult(new ActionResult(false, ex.Message)); }
     }
-
-    private NodeExecutionResult Ok(string nodeId, string msg)   => new() { NodeId = nodeId, ModuleId = ModuleId, Status = "success", Message = msg };
-    private NodeExecutionResult Fail(string nodeId, string msg) => new() { NodeId = nodeId, ModuleId = ModuleId, Status = "failed",  Message = msg };
 }
