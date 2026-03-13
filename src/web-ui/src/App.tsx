@@ -200,7 +200,7 @@ function WorkflowEditor() {
       <div className="app__right">
         <ModulePalette modules={modules} />
         <NodeInspector
-          node={selectedNode}
+          node={nodes.find(n => n.id === selectedNode?.id) ?? selectedNode}
           modules={modules}
           onDeselect={() => setSelectedNode(null)}
         />

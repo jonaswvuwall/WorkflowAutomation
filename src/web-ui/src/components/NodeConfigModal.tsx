@@ -29,7 +29,7 @@ export function NodeConfigModal({ node, modules, onClose }: NodeConfigModalProps
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal__header">
           <h2 className="modal__title">{node.data.label}</h2>
