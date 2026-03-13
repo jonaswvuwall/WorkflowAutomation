@@ -12,6 +12,7 @@ builder.Services.AddSingleton<JsonDataService>();
 // ── Event modules (Singleton — own background listeners) ────────────────────
 builder.Services.AddSingleton<IEventModule, FileWatcherEventModule>();
 builder.Services.AddSingleton<IEventModule, ManualEventModule>();
+builder.Services.AddSingleton<IEventModule, SchedulerEventModule>();
 
 // ── Action modules (Transient — stateless) ───────────────────────────────────
 builder.Services.AddTransient<IActionModule, CreateFileActionModule>();

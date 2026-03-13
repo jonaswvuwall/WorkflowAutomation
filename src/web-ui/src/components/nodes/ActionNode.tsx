@@ -12,6 +12,7 @@ export function ActionNode({ data, selected }: NodeProps<WorkflowNodeData>) {
       {data.moduleId && (
         <div className="wf-node__module">{data.moduleId}</div>
       )}
+      <Handle type="source" position={Position.Right} />
     </div>
   );
 }
