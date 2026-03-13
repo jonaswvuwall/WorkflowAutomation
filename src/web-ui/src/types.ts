@@ -27,27 +27,15 @@ export interface ModulesResponse {
   actions: ModuleManifest[];
 }
 
-// ── Custom module definitions ──────────────────────────────────────────────
-
-export interface CustomModuleDefinition {
-  id:             string;
-  name:           string;
-  description:    string;
-  category:       string;
-  moduleType:     'event' | 'action';
-  baseType:       'script' | 'http_request';
-  scriptContent?: string;
-  httpMethod?:    string;
-  httpUrl?:       string;
-  httpBody?:      string;
-  parameters:     ParameterSchema[];
-}
-
 // ── Data model ─────────────────────────────────────────────────────────────
 
 export interface NodePosition {
   x: number;
   y: number;
+}
+
+export interface NodeUi {
+  position: NodePosition;
 }
 
 export interface EventDefinition {
@@ -57,7 +45,7 @@ export interface EventDefinition {
   moduleId:      string;
   config:        Record<string, string>;
   firstActionId: string | null;
-  position:      NodePosition;
+  ui:            NodeUi;
 }
 
 export interface ActionDefinition {
@@ -66,7 +54,7 @@ export interface ActionDefinition {
   moduleId:     string;
   config:       Record<string, string>;
   nextActionId: string | null;
-  position:     NodePosition;
+  ui:           NodeUi;
 }
 
 // ── Runs ──────────────────────────────────────────────────────────────────

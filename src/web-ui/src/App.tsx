@@ -6,21 +6,17 @@ import { NodeInspector } from './components/NodeInspector';
 import { NodeConfigModal } from './components/NodeConfigModal';
 import { WorkflowList } from './components/WorkflowList';
 import { RunsPanel } from './components/RunsPanel';
-import { ModuleManager } from './components/ModuleManager';
 import { useModules } from './hooks/useModules';
 import { useEvents } from './hooks/useWorkflows';
 import { useCanvas, eventChainToFlow, type WorkflowNodeData } from './hooks/useCanvas';
 import { fetchActions, createEvent, updateEvent, createAction, updateAction } from './api';
 import type { EventDefinition, ActionDefinition } from './types';
 
-type View = 'canvas' | 'modules';
-
 function WorkflowEditor() {
-  const { modules, loading, reload: reloadModules } = useModules();
+  const { modules, loading } = useModules();
   const { events, reload, deleteEvent, runEvent, toggleEvent } = useEvents();
   const { nodes, setNodes, onNodesChange, edges, setEdges, onEdgesChange, onConnect } = useCanvas();
 
-  const [view, setView]                         = useState<View>('canvas');
   const [activeEvent, setActiveEvent]           = useState<EventDefinition | null>(null);
   const [eventName, setEventName]               = useState('New Event');
   const [eventEnabled, setEventEnabled]         = useState(true);
@@ -60,33 +56,42 @@ function WorkflowEditor() {
     setSaving(true);
 
     // Build edge map: sourceId → targetId
+    // edgeMap: canvas node id → canvas node id
     const edgeMap = new Map<string, string>(edges.map(e => [e.source, e.target]));
 
     const eventNode   = nodes.find(n => n.data.nodeType === 'event');
     const actionNodes = nodes.filter(n => n.data.nodeType === 'action');
 
-    // Save / update all action nodes
-    const savedActions: ActionDefinition[] = [];
+    // Pass 1: create new actions (without nextActionId), build canvasId → backendId map
+    const canvasToBackend = new Map<string, string>();
     for (const n of actionNodes) {
-      const actionPayload: Omit<ActionDefinition, 'id'> = {
-        name:         n.data.label,
-        moduleId:     n.data.moduleId,
-        config:       n.data.config,
-        nextActionId: edgeMap.get(n.id) ?? null,
-        position:     { x: n.position.x, y: n.position.y },
-      };
-      const exists = allActions.find(a => a.id === n.id);
-      if (exists) {
-        const updated = await updateAction(n.id, actionPayload);
-        savedActions.push(updated);
+      if (allActions.find(a => a.id === n.id)) {
+        canvasToBackend.set(n.id, n.id); // existing: canvas id == backend id
       } else {
-        const created = await createAction(actionPayload);
-        savedActions.push(created);
+        const created = await createAction({
+          name: n.data.label, moduleId: n.data.moduleId,
+          config: n.data.config, nextActionId: null,
+          ui: { position: { x: n.position.x, y: n.position.y } },
+        });
+        canvasToBackend.set(n.id, created.id);
       }
     }
 
-    // Determine firstActionId: target of the event node's outgoing edge
-    const firstActionId = eventNode ? (edgeMap.get(eventNode.id) ?? null) : null;
+    // Pass 2: update all actions with resolved nextActionId
+    for (const n of actionNodes) {
+      const backendId     = canvasToBackend.get(n.id)!;
+      const nextCanvasId  = edgeMap.get(n.id) ?? null;
+      const nextBackendId = nextCanvasId ? (canvasToBackend.get(nextCanvasId) ?? null) : null;
+      await updateAction(backendId, {
+        name: n.data.label, moduleId: n.data.moduleId,
+        config: n.data.config, nextActionId: nextBackendId,
+        ui: { position: { x: n.position.x, y: n.position.y } },
+      });
+    }
+
+    // Resolve firstActionId from edge map using backend ids
+    const firstCanvasId = eventNode ? (edgeMap.get(eventNode.id) ?? null) : null;
+    const firstActionId = firstCanvasId ? (canvasToBackend.get(firstCanvasId) ?? null) : null;
 
     const eventPayload: Omit<EventDefinition, 'id'> = {
       name:          eventName,
@@ -94,7 +99,7 @@ function WorkflowEditor() {
       moduleId:      eventNode?.data.moduleId ?? '',
       config:        eventNode?.data.config   ?? {},
       firstActionId,
-      position:      eventNode ? { x: eventNode.position.x, y: eventNode.position.y } : { x: 0, y: 0 },
+      ui: { position: eventNode ? { x: eventNode.position.x, y: eventNode.position.y } : { x: 0, y: 0 } },
     };
 
     if (activeEvent) {
@@ -156,73 +161,50 @@ function WorkflowEditor() {
 
       {/* Center */}
       <div className="app__center">
-        <div className="tab-bar">
-          <button
-            className={`tab-bar__tab ${view === 'canvas' ? 'tab-bar__tab--active' : ''}`}
-            onClick={() => setView('canvas')}
-          >
-            Events
-          </button>
-          <button
-            className={`tab-bar__tab ${view === 'modules' ? 'tab-bar__tab--active' : ''}`}
-            onClick={() => setView('modules')}
-          >
-            Module Manager
+        <div className="toolbar">
+          <input
+            className="toolbar__name"
+            value={eventName}
+            onChange={e => setEventName(e.target.value)}
+            placeholder="Event Name"
+          />
+          <label className="toolbar__toggle">
+            <input
+              type="checkbox"
+              checked={eventEnabled}
+              onChange={e => setEventEnabled(e.target.checked)}
+            />
+            Enabled
+          </label>
+          <button className="btn btn--primary" onClick={handleSave} disabled={saving}>
+            {saving ? 'Speichern…' : 'Speichern'}
           </button>
         </div>
 
-        {view === 'canvas' ? (
-          <>
-            <div className="toolbar">
-              <input
-                className="toolbar__name"
-                value={eventName}
-                onChange={e => setEventName(e.target.value)}
-                placeholder="Event Name"
-              />
-              <label className="toolbar__toggle">
-                <input
-                  type="checkbox"
-                  checked={eventEnabled}
-                  onChange={e => setEventEnabled(e.target.checked)}
-                />
-                Enabled
-              </label>
-              <button className="btn btn--primary" onClick={handleSave} disabled={saving}>
-                {saving ? 'Speichern…' : 'Speichern'}
-              </button>
-            </div>
+        <Canvas
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeClick={setSelectedNode}
+          onNodeDoubleClick={setModalNode}
+          onDrop={handleDrop}
+          modules={modules}
+        />
 
-            <Canvas
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodeClick={setSelectedNode}
-              onNodeDoubleClick={setModalNode}
-              onDrop={handleDrop}
-              modules={modules}
-            />
-
-            <RunsPanel refreshTrigger={runsRefresh} />
-          </>
-        ) : (
-          <ModuleManager onModulesChanged={reloadModules} />
-        )}
+        <RunsPanel refreshTrigger={runsRefresh} />
       </div>
 
-      {/* Right: Module palette + node inspector (only in canvas view) */}
-      {view === 'canvas' && (
-        <div className="app__right">
-          <ModulePalette modules={modules} />
-          <NodeInspector
-            node={selectedNode}
-            modules={modules}
-            onDeselect={() => setSelectedNode(null)}
-          />
-        </div>
-      )}
+      {/* Right: Module palette + node inspector */}
+      <div className="app__right">
+        <ModulePalette modules={modules} />
+        <NodeInspector
+          node={selectedNode}
+          modules={modules}
+          onDeselect={() => setSelectedNode(null)}
+        />
+      </div>
 
       {/* Double-click modal */}
       {modalNode && (

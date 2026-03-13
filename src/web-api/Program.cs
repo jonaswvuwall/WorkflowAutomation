@@ -23,8 +23,6 @@ builder.Services.AddTransient<IActionModule, SendWebhookActionModule>();
 
 // ── Orchestration layer ──────────────────────────────────────────────────────
 builder.Services.AddSingleton<ModuleRegistry>();
-builder.Services.AddSingleton<CustomModulesService>();
-builder.Services.AddSingleton<DynamicModuleLoader>();
 builder.Services.AddSingleton<WorkflowDispatcher>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<WorkflowDispatcher>());
 
@@ -42,9 +40,5 @@ app.MapControllers();
 // Initialize data files on startup
 var dataService = app.Services.GetRequiredService<JsonDataService>();
 dataService.Initialize();
-
-// Load custom module definitions into the registry
-var dynamicLoader = app.Services.GetRequiredService<DynamicModuleLoader>();
-dynamicLoader.LoadAll();
 
 app.Run();

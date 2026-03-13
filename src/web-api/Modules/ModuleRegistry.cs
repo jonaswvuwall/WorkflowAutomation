@@ -23,16 +23,6 @@ public class ModuleRegistry(
     public IEnumerable<IEventModule>  AllEvents  => _events.Values;
     public IEnumerable<IActionModule> AllActions => _actions.Values;
 
-    // Dynamic module management (for custom modules loaded at runtime)
-    public void AddDynamic(IEventModule m)  => _events[m.ModuleId]  = m;
-    public void AddDynamic(IActionModule m) => _actions[m.ModuleId] = m;
-
-    public void RemoveDynamic(string moduleId)
-    {
-        _events.Remove(moduleId);
-        _actions.Remove(moduleId);
-    }
-
     public ModulesResponse GetAllManifests() => new()
     {
         Events  = _events.Values.Select(m => m.Manifest).ToList(),

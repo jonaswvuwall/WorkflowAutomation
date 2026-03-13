@@ -33,3 +33,8 @@ public class NodePosition
     public double X { get; set; }
     public double Y { get; set; }
 }
+
+public class NodeUi
+{
+    public NodePosition Position { get; set; } = new();
+}

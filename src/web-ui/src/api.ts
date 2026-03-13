@@ -1,4 +1,4 @@
-import type { EventDefinition, ActionDefinition, Run, StatusData, ModulesResponse, CustomModuleDefinition } from './types';
+import type { EventDefinition, ActionDefinition, Run, StatusData, ModulesResponse } from './types';
 
 const API = 'http://localhost:5000/api';
 
@@ -87,31 +87,3 @@ export async function fetchRuns(): Promise<Run[]> {
   return r.json();
 }
 
-// ── Custom Modules ────────────────────────────────────────────────────────
-
-export async function fetchCustomModules(): Promise<CustomModuleDefinition[]> {
-  const r = await fetch(`${API}/custom-modules`);
-  return r.json();
-}
-
-export async function createCustomModule(def: Omit<CustomModuleDefinition, 'id'>): Promise<CustomModuleDefinition> {
-  const r = await fetch(`${API}/custom-modules`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(def),
-  });
-  return r.json();
-}
-
-export async function updateCustomModule(id: string, def: Omit<CustomModuleDefinition, 'id'>): Promise<CustomModuleDefinition> {
-  const r = await fetch(`${API}/custom-modules/${id}`, {
-    method:  'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(def),
-  });
-  return r.json();
-}
-
-export async function deleteCustomModule(id: string): Promise<void> {
-  await fetch(`${API}/custom-modules/${id}`, { method: 'DELETE' });
-}

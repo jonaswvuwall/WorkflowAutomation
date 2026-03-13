@@ -8,7 +8,7 @@ public class JsonDataService
     private readonly string _dataDir;
     private readonly string _eventsFile;
     private readonly string _actionsFile;
-    private readonly string _runsFile;
+    private readonly string _logsFile;
 
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -21,7 +21,7 @@ public class JsonDataService
         _dataDir     = Path.Combine(env.ContentRootPath, "data");
         _eventsFile  = Path.Combine(_dataDir, "events.json");
         _actionsFile = Path.Combine(_dataDir, "actions.json");
-        _runsFile    = Path.Combine(_dataDir, "runs.json");
+        _logsFile    = Path.Combine(_dataDir, "logs.json");
     }
 
     public void Initialize()
@@ -31,24 +31,23 @@ public class JsonDataService
         if (!File.Exists(_eventsFile))  File.WriteAllText(_eventsFile,  "[]");
         if (!File.Exists(_actionsFile)) File.WriteAllText(_actionsFile, "[]");
 
-        if (!File.Exists(_runsFile))
-            File.WriteAllText(_runsFile, "[]");
+        if (!File.Exists(_logsFile))
+            File.WriteAllText(_logsFile, "[]");
         else
-            ClearRunsIfLegacy();
+            ClearLogsIfLegacy();
     }
 
-    private void ClearRunsIfLegacy()
+    private void ClearLogsIfLegacy()
     {
         try
         {
-            var json = File.ReadAllText(_runsFile);
+            var json = File.ReadAllText(_logsFile);
             var arr  = System.Text.Json.Nodes.JsonNode.Parse(json) as System.Text.Json.Nodes.JsonArray;
             if (arr is null || arr.Count == 0) return;
-            // Old format had "workflowId" or "nodeResults" — clear it
             if (arr[0]?["workflowId"] is not null || arr[0]?["nodeResults"] is not null)
-                File.WriteAllText(_runsFile, "[]");
+                File.WriteAllText(_logsFile, "[]");
         }
-        catch { File.WriteAllText(_runsFile, "[]"); }
+        catch { File.WriteAllText(_logsFile, "[]"); }
     }
 
     // ── Events ────────────────────────────────────────────────────────────────
@@ -141,7 +140,7 @@ public class JsonDataService
 
     public List<Run> GetRuns()
     {
-        var json = File.ReadAllText(_runsFile);
+        var json = File.ReadAllText(_logsFile);
         return JsonSerializer.Deserialize<List<Run>>(json, _jsonOptions) ?? [];
     }
 
@@ -153,7 +152,7 @@ public class JsonDataService
         run.Id = Guid.NewGuid().ToString();
         var runs = GetRuns();
         runs.Add(run);
-        File.WriteAllText(_runsFile, JsonSerializer.Serialize(runs, _jsonOptions));
+        File.WriteAllText(_logsFile, JsonSerializer.Serialize(runs, _jsonOptions));
         return run;
     }
 }

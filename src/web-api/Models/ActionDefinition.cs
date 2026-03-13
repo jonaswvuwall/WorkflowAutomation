@@ -7,5 +7,5 @@ public class ActionDefinition
     public string                     ModuleId     { get; set; } = string.Empty;
     public Dictionary<string, string> Config       { get; set; } = [];
     public string?                    NextActionId { get; set; }
-    public NodePosition               Position     { get; set; } = new();
+    public NodeUi                     Ui           { get; set; } = new();
 }

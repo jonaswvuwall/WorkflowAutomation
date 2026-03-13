@@ -33,7 +33,7 @@ export function eventChainToFlow(
   nodes.push({
     id:       event.id,
     type:     'event',
-    position: event.position,
+    position: event.ui.position,
     data: {
       label:    event.name || moduleLabel(event.moduleId, modules),
       moduleId: event.moduleId,
@@ -52,7 +52,7 @@ export function eventChainToFlow(
     nodes.push({
       id:       action.id,
       type:     'action',
-      position: action.position,
+      position: action.ui.position,
       data: {
         label:    action.name || moduleLabel(action.moduleId, modules),
         moduleId: action.moduleId,

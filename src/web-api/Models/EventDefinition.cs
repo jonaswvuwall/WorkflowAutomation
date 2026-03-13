@@ -8,5 +8,5 @@ public class EventDefinition
     public string                     ModuleId      { get; set; } = string.Empty;
     public Dictionary<string, string> Config        { get; set; } = [];
     public string?                    FirstActionId { get; set; }
-    public NodePosition               Position      { get; set; } = new();
+    public NodeUi                     Ui            { get; set; } = new();
 }
