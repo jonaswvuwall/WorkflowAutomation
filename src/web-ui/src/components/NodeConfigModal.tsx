@@ -38,7 +38,9 @@ export function NodeConfigModal({ node, modules, onClose }: NodeConfigModalProps
 
         <div className="modal__body">
           {manifest && manifest.parameters.length > 0 ? (
-            manifest.parameters.map(param => (
+            manifest.parameters
+              .filter(p => !p.visibleWhen || localConfig[p.visibleWhen.key] === p.visibleWhen.value)
+              .map(param => (
               <ParamField
                 key={param.key}
                 schema={param}

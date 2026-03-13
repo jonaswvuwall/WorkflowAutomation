@@ -16,6 +16,14 @@ public class ParameterSchema
     /// <summary>Pre-filled value when a new node is created from this template.</summary>
     public string? Default { get; set; }
     public List<SelectOption> Options { get; set; } = [];
+    /// <summary>If set, this field is only shown when the named key equals the given value.</summary>
+    public VisibleWhen? VisibleWhen { get; set; }
+}
+
+public class VisibleWhen
+{
+    public string Key   { get; set; } = string.Empty;
+    public string Value { get; set; } = string.Empty;
 }
 
 public class ModuleManifest

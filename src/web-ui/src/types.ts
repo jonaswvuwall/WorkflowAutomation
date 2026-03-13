@@ -5,13 +5,19 @@ export interface SelectOption {
   label: string;
 }
 
+export interface VisibleWhen {
+  key:   string;
+  value: string;
+}
+
 export interface ParameterSchema {
-  key:      string;
-  label:    string;
-  type:     'text' | 'textarea' | 'select' | 'number' | 'toggle';
-  required: boolean;
-  default?: string;
-  options?: SelectOption[];
+  key:          string;
+  label:        string;
+  type:         'text' | 'textarea' | 'select' | 'number' | 'toggle';
+  required:     boolean;
+  default?:     string;
+  options?:     SelectOption[];
+  visibleWhen?: VisibleWhen;
 }
 
 export interface ModuleManifest {

@@ -76,7 +76,9 @@ export function NodeInspector({ node, modules, onDeselect }: NodeInspectorProps)
       <div className="inspector__module-id">{node.data.moduleId}</div>
 
       {manifest && manifest.parameters.length > 0 ? (
-        manifest.parameters.map(param => (
+        manifest.parameters
+          .filter(p => !p.visibleWhen || node.data.config[p.visibleWhen.key] === p.visibleWhen.value)
+          .map(param => (
           <ParamField
             key={param.key}
             schema={param}

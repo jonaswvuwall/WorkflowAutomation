@@ -28,8 +28,8 @@ public sealed class SchedulerEventModule(ILogger<SchedulerEventModule> logger)
                     new SelectOption { Value = "cron",     Label = "Cron Expression"    }
                 ]
             },
-            new ParameterSchema { Key = "every",      Label = "Every (minutes)", Type = "number", Required = false, Default = "5"         },
-            new ParameterSchema { Key = "expression", Label = "Cron Expression", Type = "text",   Required = false, Default = "0 * * * *" }
+            new ParameterSchema { Key = "every",      Label = "Every (minutes)", Type = "number", Required = false, Default = "5",         VisibleWhen = new VisibleWhen { Key = "type", Value = "interval" } },
+            new ParameterSchema { Key = "expression", Label = "Cron Expression", Type = "text",   Required = false, Default = "0 * * * *", VisibleWhen = new VisibleWhen { Key = "type", Value = "cron"     } }
         ]
     };
 
@@ -61,7 +61,8 @@ public sealed class SchedulerEventModule(ILogger<SchedulerEventModule> logger)
                                    CancellationToken ct)
     {
         config.TryGetValue("every", out var everyStr);
-        var minutes = int.TryParse(everyStr, out var m) && m > 0 ? m : 5;
+        var minutes = double.TryParse(everyStr, System.Globalization.NumberStyles.Any,
+                          System.Globalization.CultureInfo.InvariantCulture, out var m) && m > 0 ? m : 5;
         logger.LogInformation("Scheduler {EventId}: interval every {Minutes}m", eventId, minutes);
 
         using var timer = new PeriodicTimer(TimeSpan.FromMinutes(minutes));
