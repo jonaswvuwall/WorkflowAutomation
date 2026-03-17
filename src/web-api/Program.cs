@@ -20,7 +20,6 @@ builder.Services.AddTransient<IActionModule, DeleteFileActionModule>();
 builder.Services.AddTransient<IActionModule, CopyFileActionModule>();
 builder.Services.AddTransient<IActionModule, MoveFileActionModule>();
 builder.Services.AddTransient<IActionModule, LogActionModule>();
-builder.Services.AddTransient<IActionModule, SendWebhookActionModule>();
 builder.Services.AddTransient<IActionModule, HttpRequestActionModule>();
 
 // ── Orchestration layer ──────────────────────────────────────────────────────
