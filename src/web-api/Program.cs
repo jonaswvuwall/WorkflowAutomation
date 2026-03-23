@@ -6,7 +6,11 @@ using WorkflowEngine.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient(string.Empty)
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    });
 builder.Services.AddSingleton<JsonDataService>();
 
 // ── Event modules (Singleton — own background listeners) ────────────────────
@@ -21,6 +25,7 @@ builder.Services.AddTransient<IActionModule, CopyFileActionModule>();
 builder.Services.AddTransient<IActionModule, MoveFileActionModule>();
 builder.Services.AddTransient<IActionModule, LogActionModule>();
 builder.Services.AddTransient<IActionModule, HttpRequestActionModule>();
+builder.Services.AddTransient<IActionModule, WaitActionModule>();
 
 // ── Orchestration layer ──────────────────────────────────────────────────────
 builder.Services.AddSingleton<ModuleRegistry>();

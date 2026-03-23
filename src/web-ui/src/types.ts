@@ -50,7 +50,7 @@ export interface EventDefinition {
   enabled:       boolean;
   moduleId:      string;
   config:        Record<string, string>;
-  firstActionId: string | null;
+  firstActionIds: string[];
   ui:            NodeUi;
 }
 
@@ -59,7 +59,7 @@ export interface ActionDefinition {
   name:         string;
   moduleId:     string;
   config:       Record<string, string>;
-  nextActionId: string | null;
+  nextActionIds: string[];
   ui:           NodeUi;
 }
 

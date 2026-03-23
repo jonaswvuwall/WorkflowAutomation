@@ -55,14 +55,18 @@ function WorkflowEditor() {
   const handleSave = useCallback(async () => {
     setSaving(true);
 
-    // Build edge map: sourceId → targetId
-    // edgeMap: canvas node id → canvas node id
-    const edgeMap = new Map<string, string>(edges.map(e => [e.source, e.target]));
+    // Build edge map: sourceId → targetId[] (supports multiple outgoing edges per node)
+    const edgeMap = new Map<string, string[]>();
+    for (const e of edges) {
+      const targets = edgeMap.get(e.source) ?? [];
+      targets.push(e.target);
+      edgeMap.set(e.source, targets);
+    }
 
     const eventNode   = nodes.find(n => n.data.nodeType === 'event');
     const actionNodes = nodes.filter(n => n.data.nodeType === 'action');
 
-    // Pass 1: create new actions (without nextActionId), build canvasId → backendId map
+    // Pass 1: create new actions (without nextActionIds), build canvasId → backendId map
     const canvasToBackend = new Map<string, string>();
     for (const n of actionNodes) {
       if (allActions.find(a => a.id === n.id)) {
@@ -70,35 +74,35 @@ function WorkflowEditor() {
       } else {
         const created = await createAction({
           name: n.data.label, moduleId: n.data.moduleId,
-          config: n.data.config, nextActionId: null,
+          config: n.data.config, nextActionIds: [],
           ui: { position: { x: n.position.x, y: n.position.y } },
         });
         canvasToBackend.set(n.id, created.id);
       }
     }
 
-    // Pass 2: update all actions with resolved nextActionId
+    // Pass 2: update all actions with resolved nextActionIds
     for (const n of actionNodes) {
-      const backendId     = canvasToBackend.get(n.id)!;
-      const nextCanvasId  = edgeMap.get(n.id) ?? null;
-      const nextBackendId = nextCanvasId ? (canvasToBackend.get(nextCanvasId) ?? null) : null;
+      const backendId      = canvasToBackend.get(n.id)!;
+      const nextCanvasIds  = edgeMap.get(n.id) ?? [];
+      const nextActionIds  = nextCanvasIds.map(cid => canvasToBackend.get(cid)!).filter(Boolean);
       await updateAction(backendId, {
         name: n.data.label, moduleId: n.data.moduleId,
-        config: n.data.config, nextActionId: nextBackendId,
+        config: n.data.config, nextActionIds,
         ui: { position: { x: n.position.x, y: n.position.y } },
       });
     }
 
-    // Resolve firstActionId from edge map using backend ids
-    const firstCanvasId = eventNode ? (edgeMap.get(eventNode.id) ?? null) : null;
-    const firstActionId = firstCanvasId ? (canvasToBackend.get(firstCanvasId) ?? null) : null;
+    // Resolve firstActionIds from edge map using backend ids
+    const firstCanvasIds  = eventNode ? (edgeMap.get(eventNode.id) ?? []) : [];
+    const firstActionIds  = firstCanvasIds.map(cid => canvasToBackend.get(cid)!).filter(Boolean);
 
     const eventPayload: Omit<EventDefinition, 'id'> = {
       name:          eventName,
       enabled:       eventEnabled,
       moduleId:      eventNode?.data.moduleId ?? '',
       config:        eventNode?.data.config   ?? {},
-      firstActionId,
+      firstActionIds,
       ui: { position: eventNode ? { x: eventNode.position.x, y: eventNode.position.y } : { x: 0, y: 0 } },
     };
 

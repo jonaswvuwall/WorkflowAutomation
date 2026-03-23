@@ -19,8 +19,8 @@ function moduleLabel(moduleId: string, modules: ModulesResponse): string {
 }
 
 /**
- * Converts an event + its action chain into React Flow nodes/edges.
- * Event node → firstAction → nextAction → … (linked list)
+ * Converts an event + its action graph into React Flow nodes/edges.
+ * Supports multiple outgoing edges per node (parallel branches).
  */
 export function eventChainToFlow(
   event: EventDefinition,
@@ -29,6 +29,7 @@ export function eventChainToFlow(
 ) {
   const nodes: Node<WorkflowNodeData>[] = [];
   const edges: Edge[] = [];
+  const visited = new Set<string>();
 
   nodes.push({
     id:       event.id,
@@ -42,34 +43,39 @@ export function eventChainToFlow(
     },
   });
 
-  let actionId = event.firstActionId;
-  let prevId   = event.id;
+  const queue: Array<{ actionId: string; sourceId: string }> =
+    event.firstActionIds.map(id => ({ actionId: id, sourceId: event.id }));
 
-  while (actionId) {
+  while (queue.length > 0) {
+    const { actionId, sourceId } = queue.shift()!;
     const action = allActions.find(a => a.id === actionId);
-    if (!action) break;
+    if (!action) continue;
 
-    nodes.push({
-      id:       action.id,
-      type:     'action',
-      position: action.ui.position,
-      data: {
-        label:    action.name || moduleLabel(action.moduleId, modules),
-        moduleId: action.moduleId,
-        config:   action.config,
-        nodeType: 'action',
-      },
-    });
+    if (!visited.has(action.id)) {
+      visited.add(action.id);
+      nodes.push({
+        id:       action.id,
+        type:     'action',
+        position: action.ui.position,
+        data: {
+          label:    action.name || moduleLabel(action.moduleId, modules),
+          moduleId: action.moduleId,
+          config:   action.config,
+          nodeType: 'action',
+        },
+      });
+    }
 
     edges.push({
-      id:       `${prevId}->${action.id}`,
-      source:   prevId,
+      id:       `${sourceId}->${action.id}`,
+      source:   sourceId,
       target:   action.id,
       animated: true,
     });
 
-    prevId   = action.id;
-    actionId = action.nextActionId;
+    for (const nextId of action.nextActionIds) {
+      queue.push({ actionId: nextId, sourceId: action.id });
+    }
   }
 
   return { nodes, edges };

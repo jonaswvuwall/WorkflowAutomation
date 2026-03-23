@@ -5,7 +5,7 @@ namespace WorkflowEngine.Services;
 
 /// <summary>
 /// IHostedService that registers all enabled events on startup.
-/// When an event fires, walks the action chain (firstActionId → nextActionId) and saves a Run.
+/// When an event fires, executes the action graph (supporting parallel branches) and saves a Run.
 /// </summary>
 public sealed class WorkflowDispatcher(
     JsonDataService data,
@@ -61,59 +61,16 @@ public sealed class WorkflowDispatcher(
             module.Unregister(eventId);
     }
 
-    /// <summary>Execute the action chain starting at evt.FirstActionId and save a Run.</summary>
+    /// <summary>Execute the action graph starting at evt.FirstActionIds and save a Run.</summary>
     public async Task OnEventFired(TriggerContext context, EventDefinition evt)
     {
-        var allActions = data.GetAllActions();
-        var results    = new List<ActionExecutionResult>();
-        var status     = "success";
+        var actionsById = data.GetAllActions().ToDictionary(a => a.Id);
+        var allResults  = new System.Collections.Concurrent.ConcurrentBag<ActionExecutionResult>();
 
-        var actionId = evt.FirstActionId;
-        while (actionId is not null)
-        {
-            var actionDef = allActions.FirstOrDefault(a => a.Id == actionId);
-            if (actionDef is null)
-            {
-                logger.LogWarning("Action '{ActionId}' not found (event {EventId})", actionId, evt.Id);
-                status = "failed";
-                break;
-            }
+        var branchTasks = evt.FirstActionIds.Select(id => ExecuteBranchAsync(id, actionsById, context, allResults));
+        var statuses    = await Task.WhenAll(branchTasks);
 
-            var module = registry.GetAction(actionDef.ModuleId);
-            if (module is null)
-            {
-                logger.LogWarning("No action module for '{ModuleId}' (action {ActionId})", actionDef.ModuleId, actionId);
-                results.Add(new ActionExecutionResult { ActionId = actionId, ModuleId = actionDef.ModuleId, Status = "failed", Message = $"Unknown module '{actionDef.ModuleId}'" });
-                status = "failed";
-                break;
-            }
-
-            try
-            {
-                var result = await module.ExecuteAsync(actionDef.Config, context);
-                results.Add(new ActionExecutionResult
-                {
-                    ActionId = actionId,
-                    ModuleId = actionDef.ModuleId,
-                    Status   = result.Success ? "success" : "failed",
-                    Message  = result.Message
-                });
-                if (!result.Success)
-                {
-                    status = "failed";
-                    break;
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Action module {ModuleId} threw (action {ActionId})", actionDef.ModuleId, actionId);
-                results.Add(new ActionExecutionResult { ActionId = actionId, ModuleId = actionDef.ModuleId, Status = "failed", Message = ex.Message });
-                status = "failed";
-                break;
-            }
-
-            actionId = actionDef.NextActionId;
-        }
+        var status = statuses.All(s => s == "success") ? "success" : "failed";
 
         var run = new Run
         {
@@ -121,11 +78,85 @@ public sealed class WorkflowDispatcher(
             EventName     = evt.Name,
             TriggeredAt   = DateTime.UtcNow,
             Status        = status,
-            ActionResults = results
+            ActionResults = [.. allResults]
         };
 
         data.AddRun(run);
         logger.LogInformation("Run for event '{Name}': {Status} ({Count} action(s))",
-            evt.Name, status, results.Count);
+            evt.Name, status, allResults.Count);
+    }
+
+    private async Task<string> ExecuteBranchAsync(
+        string actionId,
+        Dictionary<string, ActionDefinition> actionsById,
+        TriggerContext context,
+        System.Collections.Concurrent.ConcurrentBag<ActionExecutionResult> allResults)
+    {
+        var current = actionId;
+        while (current is not null)
+        {
+            if (!actionsById.TryGetValue(current, out var actionDef))
+            {
+                logger.LogWarning("Action '{ActionId}' not found", current);
+                return "failed";
+            }
+
+            var module = registry.GetAction(actionDef.ModuleId);
+            if (module is null)
+            {
+                logger.LogWarning("No action module for '{ModuleId}' (action {ActionId})", actionDef.ModuleId, current);
+                allResults.Add(new ActionExecutionResult
+                {
+                    ActionId = current,
+                    ModuleId = actionDef.ModuleId,
+                    Status   = "failed",
+                    Message  = $"Unknown module '{actionDef.ModuleId}'"
+                });
+                return "failed";
+            }
+
+            try
+            {
+                var result = await module.ExecuteAsync(actionDef.Config, context);
+                allResults.Add(new ActionExecutionResult
+                {
+                    ActionId = current,
+                    ModuleId = actionDef.ModuleId,
+                    Status   = result.Success ? "success" : "failed",
+                    Message  = result.Message
+                });
+
+                if (!result.Success)
+                    return "failed";
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Action module {ModuleId} threw (action {ActionId})", actionDef.ModuleId, current);
+                allResults.Add(new ActionExecutionResult
+                {
+                    ActionId = current,
+                    ModuleId = actionDef.ModuleId,
+                    Status   = "failed",
+                    Message  = ex.Message
+                });
+                return "failed";
+            }
+
+            var nextIds = actionDef.NextActionIds;
+            if (nextIds.Count == 0) break;
+            if (nextIds.Count == 1)
+            {
+                current = nextIds[0];
+            }
+            else
+            {
+                // Fan out: run all branches in parallel
+                var subTasks = nextIds.Select(id => ExecuteBranchAsync(id, actionsById, context, allResults));
+                var results  = await Task.WhenAll(subTasks);
+                return results.All(s => s == "success") ? "success" : "failed";
+            }
+        }
+
+        return "success";
     }
 }
