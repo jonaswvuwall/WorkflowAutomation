@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchModules } from '../api';
 import type { ModulesResponse } from '../types';
 
-const empty: ModulesResponse = { events: [], actions: [] };
+const empty: ModulesResponse = { events: [], conditions: [], actions: [] };
 
 export function useModules() {
   const [modules, setModules] = useState<ModulesResponse>(empty);
