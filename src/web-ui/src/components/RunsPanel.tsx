@@ -29,8 +29,13 @@ export function RunsPanel({ refreshTrigger }: RunsPanelProps) {
               </span>
             </div>
             <div className="runs-panel__workflow">{run.eventName}</div>
+            {run.conditionResults?.map((r, i) => (
+              <div key={`c${i}`} className={`runs-panel__result runs-panel__result--${r.result ? 'success' : 'skipped'}`}>
+                IF {r.moduleId}: {r.result ? '✓ passed' : '✗ skipped'} — {r.message}
+              </div>
+            ))}
             {run.actionResults.map((r, i) => (
-              <div key={i} className={`runs-panel__result runs-panel__result--${r.status}`}>
+              <div key={`a${i}`} className={`runs-panel__result runs-panel__result--${r.status}`}>
                 {r.moduleId}: {r.message}
               </div>
             ))}

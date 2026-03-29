@@ -6,6 +6,6 @@ public class ActionDefinition
     public string                     Name         { get; set; } = string.Empty;
     public string                     ModuleId     { get; set; } = string.Empty;
     public Dictionary<string, string> Config       { get; set; } = [];
-    public List<string>               NextActionIds { get; set; } = [];
+    public List<StepRef>              NextSteps    { get; set; } = [];
     public NodeUi                     Ui           { get; set; } = new();
 }

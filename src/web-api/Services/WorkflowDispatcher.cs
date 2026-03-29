@@ -5,7 +5,7 @@ namespace WorkflowEngine.Services;
 
 /// <summary>
 /// IHostedService that registers all enabled events on startup.
-/// When an event fires, executes the action graph (supporting parallel branches) and saves a Run.
+/// When an event fires, executes the step graph (actions + conditions) and saves a Run.
 /// </summary>
 public sealed class WorkflowDispatcher(
     JsonDataService data,
@@ -22,7 +22,6 @@ public sealed class WorkflowDispatcher(
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    /// <summary>Call after creating or updating an event to re-register its listener.</summary>
     public void Register(EventDefinition evt)
     {
         UnregisterInternal(evt.Id);
@@ -30,7 +29,6 @@ public sealed class WorkflowDispatcher(
             RegisterInternal(evt);
     }
 
-    /// <summary>Call before deleting an event to remove its listener.</summary>
     public void Unregister(string eventId) => UnregisterInternal(eventId);
 
     private void RegisterInternal(EventDefinition evt)
@@ -46,12 +44,12 @@ public sealed class WorkflowDispatcher(
         module.Register(
             eventId: evt.Id,
             config:  evt.Config,
-            onFired: data => OnEventFired(new TriggerContext
+            onFired: triggerData => OnEventFired(new TriggerContext
             {
                 EventId       = evt.Id,
                 EventName     = evt.Name,
                 EventModuleId = evt.ModuleId,
-                Data          = data
+                Data          = triggerData
             }, evt));
     }
 
@@ -61,36 +59,100 @@ public sealed class WorkflowDispatcher(
             module.Unregister(eventId);
     }
 
-    /// <summary>Execute the action graph starting at evt.FirstActionIds and save a Run.</summary>
+    // ── Execution entry point ─────────────────────────────────────────────────
+
     public async Task OnEventFired(TriggerContext context, EventDefinition evt)
     {
-        var actionsById = data.GetAllActions().ToDictionary(a => a.Id);
-        var allResults  = new System.Collections.Concurrent.ConcurrentBag<ActionExecutionResult>();
+        var actionsById    = data.GetAllActions().ToDictionary(a => a.Id);
+        var conditionsById = data.GetAllConditions().ToDictionary(c => c.Id);
 
-        var branchTasks = evt.FirstActionIds.Select(id => ExecuteBranchAsync(id, actionsById, context, allResults));
-        var statuses    = await Task.WhenAll(branchTasks);
+        var actionResults    = new System.Collections.Concurrent.ConcurrentBag<ActionExecutionResult>();
+        var conditionResults = new System.Collections.Concurrent.ConcurrentBag<ConditionStepResult>();
 
-        var status = statuses.All(s => s == "success") ? "success" : "failed";
+        var branchTasks = evt.FirstSteps.Select(step =>
+            ExecuteStepAsync(step, actionsById, conditionsById, context, actionResults, conditionResults));
+        var statuses = await Task.WhenAll(branchTasks);
+
+        var status = statuses.Length == 0 || statuses.All(s => s == "success") ? "success" : "failed";
 
         var run = new Run
         {
-            EventId       = evt.Id,
-            EventName     = evt.Name,
-            TriggeredAt   = DateTime.UtcNow,
-            Status        = status,
-            ActionResults = [.. allResults]
+            EventId          = evt.Id,
+            EventName        = evt.Name,
+            TriggeredAt      = DateTime.UtcNow,
+            Status           = status,
+            ActionResults    = [.. actionResults],
+            ConditionResults = [.. conditionResults]
         };
 
         data.AddRun(run);
-        logger.LogInformation("Run for event '{Name}': {Status} ({Count} action(s))",
-            evt.Name, status, allResults.Count);
+        logger.LogInformation("Run for event '{Name}': {Status} ({A} action(s), {C} condition(s))",
+            evt.Name, status, actionResults.Count, conditionResults.Count);
     }
 
-    private async Task<string> ExecuteBranchAsync(
-        string actionId,
-        Dictionary<string, ActionDefinition> actionsById,
+    // ── Template substitution ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Replaces {{key}} placeholders in every config value with the matching entry from context.Data.
+    /// Unresolved placeholders are left as-is.
+    /// </summary>
+    private static Dictionary<string, string> ApplyTemplates(
+        Dictionary<string, string> config, TriggerContext context)
+    {
+        if (context.Data.Count == 0) return config;
+
+        var result = new Dictionary<string, string>(config.Count);
+        foreach (var (k, v) in config)
+        {
+            result[k] = System.Text.RegularExpressions.Regex.Replace(
+                v, @"\{\{(\w+)\}\}",
+                m => context.Data.TryGetValue(m.Groups[1].Value, out var val) ? val : m.Value);
+        }
+        return result;
+    }
+
+    // ── Step router ───────────────────────────────────────────────────────────
+
+    private Task<string> ExecuteStepAsync(
+        StepRef step,
+        Dictionary<string, ActionDefinition>    actionsById,
+        Dictionary<string, ConditionDefinition> conditionsById,
         TriggerContext context,
-        System.Collections.Concurrent.ConcurrentBag<ActionExecutionResult> allResults)
+        System.Collections.Concurrent.ConcurrentBag<ActionExecutionResult> actionResults,
+        System.Collections.Concurrent.ConcurrentBag<ConditionStepResult>  conditionResults)
+    => step.Type switch
+    {
+        "action"    => ExecuteActionChainAsync(step.Id, actionsById, conditionsById, context, actionResults, conditionResults),
+        "condition" => ExecuteConditionAsync(step.Id, actionsById, conditionsById, context, actionResults, conditionResults),
+        _           => Task.FromResult("failed")
+    };
+
+    private async Task<string> ExecuteNextStepsAsync(
+        IReadOnlyList<StepRef> nextSteps,
+        Dictionary<string, ActionDefinition>    actionsById,
+        Dictionary<string, ConditionDefinition> conditionsById,
+        TriggerContext context,
+        System.Collections.Concurrent.ConcurrentBag<ActionExecutionResult> actionResults,
+        System.Collections.Concurrent.ConcurrentBag<ConditionStepResult>  conditionResults)
+    {
+        if (nextSteps.Count == 0) return "success";
+        if (nextSteps.Count == 1)
+            return await ExecuteStepAsync(nextSteps[0], actionsById, conditionsById, context, actionResults, conditionResults);
+
+        var tasks   = nextSteps.Select(s => ExecuteStepAsync(s, actionsById, conditionsById, context, actionResults, conditionResults));
+        var results = await Task.WhenAll(tasks);
+        return results.All(s => s == "success") ? "success" : "failed";
+    }
+
+    // ── Action chain ──────────────────────────────────────────────────────────
+
+    private async Task<string> ExecuteActionChainAsync(
+        string actionId,
+        Dictionary<string, ActionDefinition>    actionsById,
+        Dictionary<string, ConditionDefinition> conditionsById,
+        TriggerContext context,
+        System.Collections.Concurrent.ConcurrentBag<ActionExecutionResult> actionResults,
+        System.Collections.Concurrent.ConcurrentBag<ConditionStepResult>  conditionResults)
     {
         var current = actionId;
         while (current is not null)
@@ -105,7 +167,7 @@ public sealed class WorkflowDispatcher(
             if (module is null)
             {
                 logger.LogWarning("No action module for '{ModuleId}' (action {ActionId})", actionDef.ModuleId, current);
-                allResults.Add(new ActionExecutionResult
+                actionResults.Add(new ActionExecutionResult
                 {
                     ActionId = current,
                     ModuleId = actionDef.ModuleId,
@@ -117,8 +179,15 @@ public sealed class WorkflowDispatcher(
 
             try
             {
-                var result = await module.ExecuteAsync(actionDef.Config, context);
-                allResults.Add(new ActionExecutionResult
+                var resolvedConfig = ApplyTemplates(actionDef.Config, context);
+                var result = await module.ExecuteAsync(resolvedConfig, context);
+
+                // Merge any output values into the shared context for downstream steps
+                if (result.OutputData is not null)
+                    foreach (var (k, v) in result.OutputData)
+                        context.Data[k] = v;
+
+                actionResults.Add(new ActionExecutionResult
                 {
                     ActionId = current,
                     ModuleId = actionDef.ModuleId,
@@ -126,13 +195,12 @@ public sealed class WorkflowDispatcher(
                     Message  = result.Message
                 });
 
-                if (!result.Success)
-                    return "failed";
+                if (!result.Success) return "failed";
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Action module {ModuleId} threw (action {ActionId})", actionDef.ModuleId, current);
-                allResults.Add(new ActionExecutionResult
+                actionResults.Add(new ActionExecutionResult
                 {
                     ActionId = current,
                     ModuleId = actionDef.ModuleId,
@@ -142,21 +210,84 @@ public sealed class WorkflowDispatcher(
                 return "failed";
             }
 
-            var nextIds = actionDef.NextActionIds;
-            if (nextIds.Count == 0) break;
-            if (nextIds.Count == 1)
+            var nextSteps = actionDef.NextSteps;
+            if (nextSteps.Count == 0) break;
+
+            // Stay in the loop if the sole next step is another action (avoids recursion)
+            if (nextSteps.Count == 1 && nextSteps[0].Type == "action")
             {
-                current = nextIds[0];
+                current = nextSteps[0].Id;
+                continue;
             }
-            else
-            {
-                // Fan out: run all branches in parallel
-                var subTasks = nextIds.Select(id => ExecuteBranchAsync(id, actionsById, context, allResults));
-                var results  = await Task.WhenAll(subTasks);
-                return results.All(s => s == "success") ? "success" : "failed";
-            }
+
+            return await ExecuteNextStepsAsync(nextSteps, actionsById, conditionsById, context, actionResults, conditionResults);
         }
 
         return "success";
+    }
+
+    // ── Condition ─────────────────────────────────────────────────────────────
+
+    private async Task<string> ExecuteConditionAsync(
+        string conditionId,
+        Dictionary<string, ActionDefinition>    actionsById,
+        Dictionary<string, ConditionDefinition> conditionsById,
+        TriggerContext context,
+        System.Collections.Concurrent.ConcurrentBag<ActionExecutionResult> actionResults,
+        System.Collections.Concurrent.ConcurrentBag<ConditionStepResult>  conditionResults)
+    {
+        if (!conditionsById.TryGetValue(conditionId, out var condDef))
+        {
+            logger.LogWarning("Condition '{ConditionId}' not found", conditionId);
+            return "failed";
+        }
+
+        var module = registry.GetCondition(condDef.ModuleId);
+        if (module is null)
+        {
+            logger.LogWarning("No condition module for '{ModuleId}' (condition {ConditionId})", condDef.ModuleId, conditionId);
+            conditionResults.Add(new ConditionStepResult
+            {
+                ConditionId = conditionId,
+                ModuleId    = condDef.ModuleId,
+                Result      = false,
+                Message     = $"Unknown module '{condDef.ModuleId}'"
+            });
+            return "failed";
+        }
+
+        bool passed;
+        try
+        {
+            var resolvedConfig = ApplyTemplates(condDef.Config, context);
+            passed = await module.EvaluateAsync(resolvedConfig, context);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Condition module {ModuleId} threw (condition {ConditionId})", condDef.ModuleId, conditionId);
+            conditionResults.Add(new ConditionStepResult
+            {
+                ConditionId = conditionId,
+                ModuleId    = condDef.ModuleId,
+                Result      = false,
+                Message     = ex.Message
+            });
+            return "failed";
+        }
+
+        conditionResults.Add(new ConditionStepResult
+        {
+            ConditionId = conditionId,
+            ModuleId    = condDef.ModuleId,
+            Result      = passed,
+            Message     = passed ? "Passed" : "Did not pass"
+        });
+
+        logger.LogInformation("Condition {ConditionId} ({ModuleId}): {Result}",
+            conditionId, condDef.ModuleId, passed ? "passed" : "skipped");
+
+        // A condition branch ending with no further steps is still a success
+        var nextSteps = passed ? condDef.TrueNextSteps : condDef.FalseNextSteps;
+        return await ExecuteNextStepsAsync(nextSteps, actionsById, conditionsById, context, actionResults, conditionResults);
     }
 }

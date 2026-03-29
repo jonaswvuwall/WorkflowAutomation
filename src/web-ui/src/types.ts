@@ -29,8 +29,9 @@ export interface ModuleManifest {
 }
 
 export interface ModulesResponse {
-  events:  ModuleManifest[];
-  actions: ModuleManifest[];
+  events:     ModuleManifest[];
+  conditions: ModuleManifest[];
+  actions:    ModuleManifest[];
 }
 
 // ── Data model ─────────────────────────────────────────────────────────────
@@ -44,23 +45,38 @@ export interface NodeUi {
   position: NodePosition;
 }
 
+export interface StepRef {
+  id:   string;
+  type: 'action' | 'condition';
+}
+
 export interface EventDefinition {
-  id:            string;
-  name:          string;
-  enabled:       boolean;
-  moduleId:      string;
-  config:        Record<string, string>;
-  firstActionIds: string[];
-  ui:            NodeUi;
+  id:         string;
+  name:       string;
+  enabled:    boolean;
+  moduleId:   string;
+  config:     Record<string, string>;
+  firstSteps: StepRef[];
+  ui:         NodeUi;
 }
 
 export interface ActionDefinition {
-  id:           string;
-  name:         string;
-  moduleId:     string;
-  config:       Record<string, string>;
-  nextActionIds: string[];
-  ui:           NodeUi;
+  id:        string;
+  name:      string;
+  moduleId:  string;
+  config:    Record<string, string>;
+  nextSteps: StepRef[];
+  ui:        NodeUi;
+}
+
+export interface ConditionDefinition {
+  id:             string;
+  name:           string;
+  moduleId:       string;
+  config:         Record<string, string>;
+  trueNextSteps:  StepRef[];
+  falseNextSteps: StepRef[];
+  ui:             NodeUi;
 }
 
 // ── Runs ──────────────────────────────────────────────────────────────────
@@ -72,14 +88,22 @@ export interface ActionExecutionResult {
   message?:  string;
 }
 
+export interface ConditionStepResult {
+  conditionId: string;
+  moduleId:    string;
+  result:      boolean;
+  message:     string;
+}
+
 export interface Run {
-  id:            string;
-  eventId:       string;
-  eventName:     string;
-  triggeredAt:   string;
-  status:        'success' | 'failed' | 'pending';
-  actionResults: ActionExecutionResult[];
-  error?:        string;
+  id:               string;
+  eventId:          string;
+  eventName:        string;
+  triggeredAt:      string;
+  status:           'success' | 'failed' | 'pending';
+  actionResults:    ActionExecutionResult[];
+  conditionResults: ConditionStepResult[];
+  error?:           string;
 }
 
 // ── Status ────────────────────────────────────────────────────────────────

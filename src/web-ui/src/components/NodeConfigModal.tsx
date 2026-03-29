@@ -13,7 +13,7 @@ interface NodeConfigModalProps {
 export function NodeConfigModal({ node, modules, onClose }: NodeConfigModalProps) {
   const { setNodes } = useReactFlow();
 
-  const allManifests = [...modules.events, ...modules.actions];
+  const allManifests = [...modules.events, ...modules.conditions, ...modules.actions];
   const manifest = allManifests.find(m => m.id === node.data.moduleId);
 
   // Local copy of config for editing before save

@@ -35,6 +35,13 @@ public class ModuleManifest
     public List<ParameterSchema> Parameters { get; set; } = [];
 }
 
+public class ModulesResponse
+{
+    public IReadOnlyCollection<ModuleManifest> Events     { get; set; } = [];
+    public IReadOnlyCollection<ModuleManifest> Conditions { get; set; } = [];
+    public IReadOnlyCollection<ModuleManifest> Actions    { get; set; } = [];
+}
+
 /// <summary>Runtime data passed from an event through the action chain.</summary>
 public class TriggerContext
 {

@@ -1,4 +1,4 @@
-import type { EventDefinition, ActionDefinition, Run, StatusData, ModulesResponse } from './types';
+import type { EventDefinition, ActionDefinition, ConditionDefinition, Run, StatusData, ModulesResponse } from './types';
 
 const API = 'http://localhost:5000/api';
 
@@ -80,10 +80,38 @@ export async function deleteAction(id: string): Promise<void> {
   await fetch(`${API}/actions/${id}`, { method: 'DELETE' });
 }
 
+// ── Conditions ────────────────────────────────────────────────────────────
+
+export async function fetchConditions(): Promise<ConditionDefinition[]> {
+  const r = await fetch(`${API}/conditions`);
+  return r.json();
+}
+
+export async function createCondition(cond: Omit<ConditionDefinition, 'id'>): Promise<ConditionDefinition> {
+  const r = await fetch(`${API}/conditions`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(cond),
+  });
+  return r.json();
+}
+
+export async function updateCondition(id: string, cond: Omit<ConditionDefinition, 'id'>): Promise<ConditionDefinition> {
+  const r = await fetch(`${API}/conditions/${id}`, {
+    method:  'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(cond),
+  });
+  return r.json();
+}
+
+export async function deleteCondition(id: string): Promise<void> {
+  await fetch(`${API}/conditions/${id}`, { method: 'DELETE' });
+}
+
 // ── Runs ──────────────────────────────────────────────────────────────────
 
 export async function fetchRuns(): Promise<Run[]> {
   const r = await fetch(`${API}/runs`);
   return r.json();
 }
-

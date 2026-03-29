@@ -7,6 +7,6 @@ public class EventDefinition
     public bool                       Enabled       { get; set; } = true;
     public string                     ModuleId      { get; set; } = string.Empty;
     public Dictionary<string, string> Config        { get; set; } = [];
-    public List<string>               FirstActionIds { get; set; } = [];
+    public List<StepRef>              FirstSteps    { get; set; } = [];
     public NodeUi                     Ui            { get; set; } = new();
 }

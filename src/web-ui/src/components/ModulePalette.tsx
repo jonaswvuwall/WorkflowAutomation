@@ -38,6 +38,13 @@ export function ModulePalette({ modules }: ModulePaletteProps) {
       </section>
 
       <section className="palette__section">
+        <h4 className="palette__section-title palette__section-title--condition">Conditions</h4>
+        {modules.conditions.map(m => (
+          <PaletteItem key={m.id} manifest={m} nodeType="condition" />
+        ))}
+      </section>
+
+      <section className="palette__section">
         <h4 className="palette__section-title palette__section-title--action">Actions</h4>
         {modules.actions.map(m => (
           <PaletteItem key={m.id} manifest={m} nodeType="action" />

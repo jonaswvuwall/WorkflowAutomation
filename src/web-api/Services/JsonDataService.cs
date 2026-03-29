@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using WorkflowEngine.Models;
 
 namespace WorkflowEngine.Services;
@@ -8,6 +9,7 @@ public class JsonDataService
     private readonly string _dataDir;
     private readonly string _eventsFile;
     private readonly string _actionsFile;
+    private readonly string _conditionsFile;
     private readonly string _logsFile;
 
     private readonly JsonSerializerOptions _jsonOptions = new()
@@ -18,36 +20,93 @@ public class JsonDataService
 
     public JsonDataService(IWebHostEnvironment env)
     {
-        _dataDir     = Path.Combine(env.ContentRootPath, "data");
-        _eventsFile  = Path.Combine(_dataDir, "events.json");
-        _actionsFile = Path.Combine(_dataDir, "actions.json");
-        _logsFile    = Path.Combine(_dataDir, "logs.json");
+        _dataDir        = Path.Combine(env.ContentRootPath, "data");
+        _eventsFile     = Path.Combine(_dataDir, "events.json");
+        _actionsFile    = Path.Combine(_dataDir, "actions.json");
+        _conditionsFile = Path.Combine(_dataDir, "conditions.json");
+        _logsFile       = Path.Combine(_dataDir, "logs.json");
     }
 
     public void Initialize()
     {
         Directory.CreateDirectory(_dataDir);
 
-        if (!File.Exists(_eventsFile))  File.WriteAllText(_eventsFile,  "[]");
-        if (!File.Exists(_actionsFile)) File.WriteAllText(_actionsFile, "[]");
+        if (!File.Exists(_eventsFile))     File.WriteAllText(_eventsFile,     "[]");
+        if (!File.Exists(_actionsFile))    File.WriteAllText(_actionsFile,    "[]");
+        if (!File.Exists(_conditionsFile)) File.WriteAllText(_conditionsFile, "[]");
 
         if (!File.Exists(_logsFile))
             File.WriteAllText(_logsFile, "[]");
         else
             ClearLogsIfLegacy();
+
+        MigrateEventsIfLegacy();
+        MigrateActionsIfLegacy();
     }
+
+    // ── Migration ─────────────────────────────────────────────────────────────
 
     private void ClearLogsIfLegacy()
     {
         try
         {
             var json = File.ReadAllText(_logsFile);
-            var arr  = System.Text.Json.Nodes.JsonNode.Parse(json) as System.Text.Json.Nodes.JsonArray;
+            var arr  = JsonNode.Parse(json) as JsonArray;
             if (arr is null || arr.Count == 0) return;
             if (arr[0]?["workflowId"] is not null || arr[0]?["nodeResults"] is not null)
                 File.WriteAllText(_logsFile, "[]");
         }
         catch { File.WriteAllText(_logsFile, "[]"); }
+    }
+
+    /// <summary>Converts firstActionIds (string[]) → firstSteps (StepRef[]) in events.json.</summary>
+    private void MigrateEventsIfLegacy()
+    {
+        try
+        {
+            var json = File.ReadAllText(_eventsFile);
+            var arr  = JsonNode.Parse(json) as JsonArray;
+            if (arr is null || arr.Count == 0 || arr[0]?["firstActionIds"] is null) return;
+
+            foreach (var item in arr)
+            {
+                if (item is not JsonObject obj) continue;
+                var ids        = obj["firstActionIds"]?.AsArray();
+                var firstSteps = new JsonArray();
+                if (ids is not null)
+                    foreach (var id in ids)
+                        firstSteps.Add(new JsonObject { ["id"] = id?.GetValue<string>(), ["type"] = "action" });
+                obj.Remove("firstActionIds");
+                obj["firstSteps"] = firstSteps;
+            }
+            File.WriteAllText(_eventsFile, arr.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch { /* leave as-is; deserialization returns empty lists */ }
+    }
+
+    /// <summary>Converts nextActionIds (string[]) → nextSteps (StepRef[]) in actions.json.</summary>
+    private void MigrateActionsIfLegacy()
+    {
+        try
+        {
+            var json = File.ReadAllText(_actionsFile);
+            var arr  = JsonNode.Parse(json) as JsonArray;
+            if (arr is null || arr.Count == 0 || arr[0]?["nextActionIds"] is null) return;
+
+            foreach (var item in arr)
+            {
+                if (item is not JsonObject obj) continue;
+                var ids       = obj["nextActionIds"]?.AsArray();
+                var nextSteps = new JsonArray();
+                if (ids is not null)
+                    foreach (var id in ids)
+                        nextSteps.Add(new JsonObject { ["id"] = id?.GetValue<string>(), ["type"] = "action" });
+                obj.Remove("nextActionIds");
+                obj["nextSteps"] = nextSteps;
+            }
+            File.WriteAllText(_actionsFile, arr.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch { /* leave as-is */ }
     }
 
     // ── Events ────────────────────────────────────────────────────────────────
@@ -135,6 +194,49 @@ public class JsonDataService
 
     private void SaveActions(List<ActionDefinition> actions)
         => File.WriteAllText(_actionsFile, JsonSerializer.Serialize(actions, _jsonOptions));
+
+    // ── Conditions ────────────────────────────────────────────────────────────
+
+    public List<ConditionDefinition> GetAllConditions()
+    {
+        var json = File.ReadAllText(_conditionsFile);
+        return JsonSerializer.Deserialize<List<ConditionDefinition>>(json, _jsonOptions) ?? [];
+    }
+
+    public ConditionDefinition? GetCondition(string id)
+        => GetAllConditions().FirstOrDefault(c => c.Id == id);
+
+    public ConditionDefinition AddCondition(ConditionDefinition cond)
+    {
+        cond.Id = Guid.NewGuid().ToString("N")[..8];
+        var all = GetAllConditions();
+        all.Add(cond);
+        SaveConditions(all);
+        return cond;
+    }
+
+    public ConditionDefinition? UpdateCondition(string id, ConditionDefinition cond)
+    {
+        var all   = GetAllConditions();
+        var index = all.FindIndex(c => c.Id == id);
+        if (index < 0) return null;
+        cond.Id    = id;
+        all[index] = cond;
+        SaveConditions(all);
+        return cond;
+    }
+
+    public bool DeleteCondition(string id)
+    {
+        var all     = GetAllConditions();
+        var removed = all.RemoveAll(c => c.Id == id);
+        if (removed == 0) return false;
+        SaveConditions(all);
+        return true;
+    }
+
+    private void SaveConditions(List<ConditionDefinition> conditions)
+        => File.WriteAllText(_conditionsFile, JsonSerializer.Serialize(conditions, _jsonOptions));
 
     // ── Runs ──────────────────────────────────────────────────────────────────
 

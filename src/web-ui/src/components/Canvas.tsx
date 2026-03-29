@@ -6,12 +6,14 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { EventNode } from './nodes/EventNode';
 import { ActionNode } from './nodes/ActionNode';
+import { ConditionNode } from './nodes/ConditionNode';
 import type { WorkflowNodeData } from '../hooks/useCanvas';
 import type { ModulesResponse } from '../types';
 
 const nodeTypes = {
-  event:  EventNode,
-  action: ActionNode,
+  event:     EventNode,
+  action:    ActionNode,
+  condition: ConditionNode,
 };
 
 interface CanvasProps {

@@ -53,7 +53,7 @@ export function NodeInspector({ node, modules, onDeselect }: NodeInspectorProps)
     );
   }
 
-  const allManifests = [...modules.events, ...modules.actions];
+  const allManifests = [...modules.events, ...modules.conditions, ...modules.actions];
   const manifest = allManifests.find(m => m.id === node.data.moduleId);
 
   const updateConfig = (key: string, value: string) => {
